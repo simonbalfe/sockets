@@ -458,6 +458,67 @@ curl "$BASE/stats"
 # → {"users":1,"boards":3,"lists":12,"cards":47,"checklistItems":15,"checklists":5,"labels":9}
 ```
 
+## Knowledge Base
+
+The knowledge base stores user-scoped resources (links, videos, PDFs, social posts, creators, etc.) with their own label system separate from board labels.
+
+### Knowledge Items
+
+| Method | Path | Body / Query | Purpose |
+|--------|------|--------------|---------|
+| GET | `/knowledge-items` | — | List all knowledge items for current user |
+| GET | `/knowledge-items/search` | Query: `type`, `label` | Filter items by type and/or label |
+| GET | `/knowledge-items/:publicId` | — | Get knowledge item by publicId |
+| POST | `/knowledge-items` | `{ title, type, url?, description? }` | Create knowledge item |
+| PUT | `/knowledge-items/:publicId` | `{ title?, type?, url?, description? }` | Update knowledge item |
+| DELETE | `/knowledge-items/:publicId` | — | Soft-delete knowledge item |
+| PUT | `/knowledge-items/:publicId/labels/:labelPublicId` | — | Toggle label. Returns `{ added: boolean }` |
+
+Knowledge item `type`: `"link" | "creator" | "tweet" | "instagram" | "tiktok" | "youtube" | "linkedin" | "image" | "video" | "pdf" | "audio" | "other"`.
+
+### Search / Filter
+
+`GET /knowledge-items/search` accepts optional query params:
+
+| Param | Format | Purpose |
+|-------|--------|---------|
+| `type` | Comma-separated or repeated | Filter by item type(s) |
+| `label` | Comma-separated or repeated | Filter by label publicId(s) |
+
+```bash
+# All TikToks
+curl "$BASE/knowledge-items/search?type=tiktok"
+
+# TikToks and Instagram posts
+curl "$BASE/knowledge-items/search?type=tiktok,instagram"
+
+# YouTube items with a specific label
+curl "$BASE/knowledge-items/search?type=youtube&label=abc123def456"
+```
+
+### Knowledge Labels
+
+| Method | Path | Body | Purpose |
+|--------|------|------|---------|
+| GET | `/knowledge-items/labels/all` | — | List all knowledge labels |
+| POST | `/knowledge-items/labels` | `{ name, colourCode }` | Create label |
+| PUT | `/knowledge-items/labels/:labelPublicId` | `{ name, colourCode }` | Update label |
+| DELETE | `/knowledge-items/labels/:labelPublicId` | — | Soft-delete label |
+
+```bash
+# Save a TikTok
+curl -X POST "$BASE/knowledge-items" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Viral hook format", "type": "tiktok", "url": "https://tiktok.com/@user/video/123"}'
+
+# Create a label and tag the item
+curl -X POST "$BASE/knowledge-items/labels" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Repurpose", "colourCode": "#3b82f6"}'
+
+curl -X PUT "$BASE/knowledge-items/ItemPublicId/labels/LabelPublicId"
+```
+
 ## Error Handling
 
 All errors return JSON `{ error: string }` with standard HTTP status codes:
@@ -490,3 +551,7 @@ curl "$BASE/cards/doesNotExist"
 | Label colourCode | hex `#RRGGBB` |
 | Checklist name | 1–255 chars |
 | Checklist item title | 1–500 chars |
+| Knowledge item title | 1–255 chars |
+| Knowledge item type | `link`, `creator`, `tweet`, `instagram`, `tiktok`, `youtube`, `linkedin`, `image`, `video`, `pdf`, `audio`, `other` |
+| Knowledge label name | 1–255 chars |
+| Knowledge label colourCode | max 12 chars |
