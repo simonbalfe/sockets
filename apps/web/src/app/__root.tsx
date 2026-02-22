@@ -3,7 +3,11 @@ import {
   HeadContent,
   Outlet,
   Scripts,
+  useLocation,
+  useNavigate,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { authClient } from "~/lib/auth-client";
 import { ModalProvider } from "~/providers/modal";
 import { PopupProvider } from "~/providers/popup";
 import { ThemeProvider } from "~/providers/theme";
@@ -30,6 +34,32 @@ export const Route = createRootRoute({
   component: RootLayout,
 });
 
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { data: session, isPending } = authClient.useSession();
+  const navigate = useNavigate();
+  const pathname = useLocation({ select: (l) => l.pathname });
+
+  useEffect(() => {
+    if (!isPending && !session && pathname !== "/login") {
+      navigate({ to: "/login" });
+    }
+  }, [session, isPending, pathname, navigate]);
+
+  if (isPending) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-light-100 dark:bg-dark-100">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-light-300 border-t-light-900 dark:border-dark-300 dark:border-t-dark-900" />
+      </div>
+    );
+  }
+
+  if (!session && pathname !== "/login") {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
 function RootLayout() {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -55,7 +85,9 @@ function RootLayout() {
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <ModalProvider>
               <PopupProvider>
-                <Outlet />
+                <AuthGuard>
+                  <Outlet />
+                </AuthGuard>
               </PopupProvider>
             </ModalProvider>
           </ThemeProvider>

@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import { twMerge } from "tailwind-merge";
 import { env } from "~/env";
 import { useIsMobile } from "~/hooks/useMediaQuery";
+import { authClient } from "~/lib/auth-client";
 import { useModal } from "~/providers/modal";
 import { useTheme } from "~/providers/theme";
 import { getAvatarUrl } from "~/utils/helpers";
@@ -30,11 +31,12 @@ export default function UserMenu({
   const { openModal } = useModal();
   const isMobile = useIsMobile();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (onCloseSideNav && isMobile) {
       onCloseSideNav();
     }
-    navigate({ to: "/" });
+    await authClient.signOut();
+    navigate({ to: "/login" });
   };
 
   const handleLinkClick = () => {

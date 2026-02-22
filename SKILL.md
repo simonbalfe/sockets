@@ -9,10 +9,11 @@ Kan is a self-hosted Kanban board application. This skill enables interaction wi
 
 ## Base URL
 
-All endpoints are prefixed with `/api`. The default local development URL is `https://kan.simonbalfe.com`.
+All endpoints are prefixed with `/api`. The url is `https://kan.simonbalfe.com`.
 
 ```bash
 BASE="https://kan.simonbalfe.com/api"
+AUTH="-H \"Authorization: Bearer kan_<your-token>\""
 ```
 
 ## Core Concepts
@@ -29,7 +30,33 @@ Soft-delete is used throughout: deleted records keep their data but are excluded
 
 ## Authentication
 
-No token-based auth. A default user (`local@kan.dev`) is auto-created and injected into every request.
+All protected endpoints require a user API key sent as a Bearer token:
+
+```
+Authorization: Bearer kan_<token>
+```
+
+Keys never expire. Ask the user to provide their API key.
+
+### Generating a key
+
+A key can only be generated while authenticated via browser session. Once generated, store it for future use.
+
+```bash
+# While logged in via browser session:
+curl $AUTH -X POST "$BASE/user-api-keys" \
+  -b cookies.txt
+# → { "key": "kan_abc123..." }
+```
+
+### Using the key
+
+Include the `Authorization` header on every request. In the examples below, `$AUTH` expands to `-H "Authorization: Bearer kan_<token>"`.
+
+```bash
+AUTH="-H \"Authorization: Bearer kan_<your-token>\""
+curl $AUTH "$BASE/boards"
+```
 
 ## Endpoints
 
@@ -41,9 +68,9 @@ No token-based auth. A default user (`local@kan.dev`) is auto-created and inject
 | GET | `/stats` | Returns counts: `{ users, boards, lists, cards, checklistItems, checklists, labels }` |
 
 ```bash
-curl "$BASE/health"
+curl $AUTH "$BASE/health"
 
-curl "$BASE/stats"
+curl $AUTH "$BASE/stats"
 ```
 
 ### Users
@@ -54,9 +81,9 @@ curl "$BASE/stats"
 | PUT | `/users/` | Update user. Body: `{ name?, image? }` |
 
 ```bash
-curl "$BASE/users/me"
+curl $AUTH "$BASE/users/me"
 
-curl -X PUT "$BASE/users/" \
+curl $AUTH -X PUT "$BASE/users/" \
   -H "Content-Type: application/json" \
   -d '{"name": "Simon", "image": "https://example.com/avatar.png"}'
 ```
@@ -74,37 +101,37 @@ curl -X PUT "$BASE/users/" \
 | GET | `/boards/:boardPublicId/check-slug` | Check slug availability. Query: `boardSlug`. Returns `{ isReserved }` |
 
 ```bash
-curl "$BASE/boards/"
+curl $AUTH "$BASE/boards/"
 
-curl "$BASE/boards/?type=template"
+curl $AUTH "$BASE/boards/?type=template"
 
-curl "$BASE/boards/AbCdEfGhIjKl"
+curl $AUTH "$BASE/boards/AbCdEfGhIjKl"
 
-curl "$BASE/boards/by-slug/my-project"
+curl $AUTH "$BASE/boards/by-slug/my-project"
 
-curl "$BASE/boards/AbCdEfGhIjKl?dueDateFilters=overdue&dueDateFilters=today"
+curl $AUTH "$BASE/boards/AbCdEfGhIjKl?dueDateFilters=overdue&dueDateFilters=today"
 
-curl "$BASE/boards/AbCdEfGhIjKl?labels=LabelId00001&labels=LabelId00002"
+curl $AUTH "$BASE/boards/AbCdEfGhIjKl?labels=LabelId00001&labels=LabelId00002"
 
-curl -X POST "$BASE/boards/" \
+curl $AUTH -X POST "$BASE/boards/" \
   -H "Content-Type: application/json" \
   -d '{"name": "My Project", "lists": ["Backlog", "In Progress", "Done"], "labels": ["Bug", "Feature", "Urgent"]}'
 
-curl -X POST "$BASE/boards/" \
+curl $AUTH -X POST "$BASE/boards/" \
   -H "Content-Type: application/json" \
   -d '{"name": "Sprint Template", "lists": ["To Do", "Doing", "Review", "Done"], "labels": ["P0", "P1", "P2"], "type": "template"}'
 
-curl -X POST "$BASE/boards/" \
+curl $AUTH -X POST "$BASE/boards/" \
   -H "Content-Type: application/json" \
   -d '{"name": "Sprint 42", "lists": [], "labels": [], "sourceBoardPublicId": "TemplateId001"}'
 
-curl -X PUT "$BASE/boards/AbCdEfGhIjKl" \
+curl $AUTH -X PUT "$BASE/boards/AbCdEfGhIjKl" \
   -H "Content-Type: application/json" \
   -d '{"name": "Renamed Project", "slug": "renamed-project", "visibility": "public"}'
 
-curl -X DELETE "$BASE/boards/AbCdEfGhIjKl"
+curl $AUTH -X DELETE "$BASE/boards/AbCdEfGhIjKl"
 
-curl "$BASE/boards/AbCdEfGhIjKl/check-slug?boardSlug=my-slug"
+curl $AUTH "$BASE/boards/AbCdEfGhIjKl/check-slug?boardSlug=my-slug"
 ```
 
 ### Lists
@@ -116,19 +143,19 @@ curl "$BASE/boards/AbCdEfGhIjKl/check-slug?boardSlug=my-slug"
 | DELETE | `/lists/:listPublicId` | Soft-delete list and all child cards |
 
 ```bash
-curl -X POST "$BASE/lists/" \
+curl $AUTH -X POST "$BASE/lists/" \
   -H "Content-Type: application/json" \
   -d '{"name": "QA Review", "boardPublicId": "AbCdEfGhIjKl"}'
 
-curl -X PUT "$BASE/lists/ListPublicId1" \
+curl $AUTH -X PUT "$BASE/lists/ListPublicId1" \
   -H "Content-Type: application/json" \
   -d '{"name": "Code Review"}'
 
-curl -X PUT "$BASE/lists/ListPublicId1" \
+curl $AUTH -X PUT "$BASE/lists/ListPublicId1" \
   -H "Content-Type: application/json" \
   -d '{"index": 0}'
 
-curl -X DELETE "$BASE/lists/ListPublicId1"
+curl $AUTH -X DELETE "$BASE/lists/ListPublicId1"
 ```
 
 ### Cards
@@ -142,11 +169,11 @@ curl -X DELETE "$BASE/lists/ListPublicId1"
 | PUT | `/cards/:cardPublicId/labels/:labelPublicId` | Toggle label on card. Returns `{ newLabel: boolean }` |
 
 ```bash
-curl -X POST "$BASE/cards/" \
+curl $AUTH -X POST "$BASE/cards/" \
   -H "Content-Type: application/json" \
   -d '{"title": "Implement login page", "listPublicId": "ListPublicId1", "position": "start"}'
 
-curl -X POST "$BASE/cards/" \
+curl $AUTH -X POST "$BASE/cards/" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Fix auth bug",
@@ -157,35 +184,35 @@ curl -X POST "$BASE/cards/" \
     "dueDate": "2026-02-25T00:00:00.000Z"
   }'
 
-curl "$BASE/cards/CardPublicId1"
+curl $AUTH "$BASE/cards/CardPublicId1"
 
-curl -X PUT "$BASE/cards/CardPublicId1" \
+curl $AUTH -X PUT "$BASE/cards/CardPublicId1" \
   -H "Content-Type: application/json" \
   -d '{"title": "Implement login page (v2)"}'
 
-curl -X PUT "$BASE/cards/CardPublicId1" \
+curl $AUTH -X PUT "$BASE/cards/CardPublicId1" \
   -H "Content-Type: application/json" \
   -d '{"description": "Updated requirements: support SSO"}'
 
-curl -X PUT "$BASE/cards/CardPublicId1" \
+curl $AUTH -X PUT "$BASE/cards/CardPublicId1" \
   -H "Content-Type: application/json" \
   -d '{"dueDate": "2026-03-01T00:00:00.000Z"}'
 
-curl -X PUT "$BASE/cards/CardPublicId1" \
+curl $AUTH -X PUT "$BASE/cards/CardPublicId1" \
   -H "Content-Type: application/json" \
   -d '{"dueDate": null}'
 
-curl -X PUT "$BASE/cards/CardPublicId1" \
+curl $AUTH -X PUT "$BASE/cards/CardPublicId1" \
   -H "Content-Type: application/json" \
   -d '{"listPublicId": "ListPublicId2", "index": 0}'
 
-curl -X PUT "$BASE/cards/CardPublicId1" \
+curl $AUTH -X PUT "$BASE/cards/CardPublicId1" \
   -H "Content-Type: application/json" \
   -d '{"index": 2}'
 
-curl -X DELETE "$BASE/cards/CardPublicId1"
+curl $AUTH -X DELETE "$BASE/cards/CardPublicId1"
 
-curl -X PUT "$BASE/cards/CardPublicId1/labels/LabelId00001"
+curl $AUTH -X PUT "$BASE/cards/CardPublicId1/labels/LabelId00001"
 ```
 
 ### Labels
@@ -198,17 +225,17 @@ curl -X PUT "$BASE/cards/CardPublicId1/labels/LabelId00001"
 | DELETE | `/labels/:labelPublicId` | Soft-delete label and remove from all cards |
 
 ```bash
-curl "$BASE/labels/LabelId00001"
+curl $AUTH "$BASE/labels/LabelId00001"
 
-curl -X POST "$BASE/labels/" \
+curl $AUTH -X POST "$BASE/labels/" \
   -H "Content-Type: application/json" \
   -d '{"name": "Critical", "boardPublicId": "AbCdEfGhIjKl", "colourCode": "#ef4444"}'
 
-curl -X PUT "$BASE/labels/LabelId00001" \
+curl $AUTH -X PUT "$BASE/labels/LabelId00001" \
   -H "Content-Type: application/json" \
   -d '{"name": "High Priority", "colourCode": "#f97316"}'
 
-curl -X DELETE "$BASE/labels/LabelId00001"
+curl $AUTH -X DELETE "$BASE/labels/LabelId00001"
 ```
 
 ### Checklists
@@ -223,41 +250,41 @@ curl -X DELETE "$BASE/labels/LabelId00001"
 | DELETE | `/checklists/items/:checklistItemPublicId` | Soft-delete item |
 
 ```bash
-curl -X POST "$BASE/checklists/" \
+curl $AUTH -X POST "$BASE/checklists/" \
   -H "Content-Type: application/json" \
   -d '{"cardPublicId": "CardPublicId1", "name": "Acceptance Criteria"}'
 
-curl -X PUT "$BASE/checklists/ChkListPubId1" \
+curl $AUTH -X PUT "$BASE/checklists/ChkListPubId1" \
   -H "Content-Type: application/json" \
   -d '{"name": "Definition of Done"}'
 
-curl -X DELETE "$BASE/checklists/ChkListPubId1"
+curl $AUTH -X DELETE "$BASE/checklists/ChkListPubId1"
 
-curl -X POST "$BASE/checklists/ChkListPubId1/items" \
+curl $AUTH -X POST "$BASE/checklists/ChkListPubId1/items" \
   -H "Content-Type: application/json" \
   -d '{"title": "Unit tests pass"}'
 
-curl -X POST "$BASE/checklists/ChkListPubId1/items" \
+curl $AUTH -X POST "$BASE/checklists/ChkListPubId1/items" \
   -H "Content-Type: application/json" \
   -d '{"title": "Code reviewed"}'
 
-curl -X PATCH "$BASE/checklists/items/ChkItemPubId1" \
+curl $AUTH -X PATCH "$BASE/checklists/items/ChkItemPubId1" \
   -H "Content-Type: application/json" \
   -d '{"completed": true}'
 
-curl -X PATCH "$BASE/checklists/items/ChkItemPubId1" \
+curl $AUTH -X PATCH "$BASE/checklists/items/ChkItemPubId1" \
   -H "Content-Type: application/json" \
   -d '{"completed": false}'
 
-curl -X PATCH "$BASE/checklists/items/ChkItemPubId1" \
+curl $AUTH -X PATCH "$BASE/checklists/items/ChkItemPubId1" \
   -H "Content-Type: application/json" \
   -d '{"title": "All unit tests pass"}'
 
-curl -X PATCH "$BASE/checklists/items/ChkItemPubId1" \
+curl $AUTH -X PATCH "$BASE/checklists/items/ChkItemPubId1" \
   -H "Content-Type: application/json" \
   -d '{"index": 0}'
 
-curl -X DELETE "$BASE/checklists/items/ChkItemPubId1"
+curl $AUTH -X DELETE "$BASE/checklists/items/ChkItemPubId1"
 ```
 
 ## Common Workflows
@@ -266,7 +293,7 @@ curl -X DELETE "$BASE/checklists/items/ChkItemPubId1"
 
 ```bash
 # Create the board with columns and labels
-curl -X POST "$BASE/boards/" \
+curl $AUTH -X POST "$BASE/boards/" \
   -H "Content-Type: application/json" \
   -d '{"name": "Website Redesign", "lists": ["Backlog", "In Progress", "Review", "Done"], "labels": ["Bug", "Feature", "Design", "Urgent"]}'
 
@@ -278,11 +305,11 @@ curl -X POST "$BASE/boards/" \
 
 ```bash
 # Step 1: Get the board to find list publicIds
-curl "$BASE/boards/Brd_AbCd1234"
+curl $AUTH "$BASE/boards/Brd_AbCd1234"
 # Find the target list's publicId from the response, e.g. "Lst_Backlog01"
 
 # Step 2: Create the card in that list
-curl -X POST "$BASE/cards/" \
+curl $AUTH -X POST "$BASE/cards/" \
   -H "Content-Type: application/json" \
   -d '{"title": "Redesign homepage hero section", "description": "New hero with animated gradient background", "listPublicId": "Lst_Backlog01", "position": "start"}'
 ```
@@ -290,7 +317,7 @@ curl -X POST "$BASE/cards/" \
 ### 3. Move a card between lists (e.g. "In Progress" → "Review")
 
 ```bash
-curl -X PUT "$BASE/cards/Card_TaskId01" \
+curl $AUTH -X PUT "$BASE/cards/Card_TaskId01" \
   -H "Content-Type: application/json" \
   -d '{"listPublicId": "Lst_Review001", "index": 0}'
 ```
@@ -299,7 +326,7 @@ curl -X PUT "$BASE/cards/Card_TaskId01" \
 
 ```bash
 # Move card to position 2 (0-based) in its current list
-curl -X PUT "$BASE/cards/Card_TaskId01" \
+curl $AUTH -X PUT "$BASE/cards/Card_TaskId01" \
   -H "Content-Type: application/json" \
   -d '{"index": 2}'
 ```
@@ -308,14 +335,14 @@ curl -X PUT "$BASE/cards/Card_TaskId01" \
 
 ```bash
 # Toggle labels on — call once to add, call again to remove
-curl -X PUT "$BASE/cards/Card_TaskId01/labels/Lbl_Feature01"
+curl $AUTH -X PUT "$BASE/cards/Card_TaskId01/labels/Lbl_Feature01"
 # → {"newLabel": true}   (added)
 
-curl -X PUT "$BASE/cards/Card_TaskId01/labels/Lbl_Urgent001"
+curl $AUTH -X PUT "$BASE/cards/Card_TaskId01/labels/Lbl_Urgent001"
 # → {"newLabel": true}   (added)
 
 # Toggle off by calling again
-curl -X PUT "$BASE/cards/Card_TaskId01/labels/Lbl_Urgent001"
+curl $AUTH -X PUT "$BASE/cards/Card_TaskId01/labels/Lbl_Urgent001"
 # → {"newLabel": false}  (removed)
 ```
 
@@ -323,12 +350,12 @@ curl -X PUT "$BASE/cards/Card_TaskId01/labels/Lbl_Urgent001"
 
 ```bash
 # Set a due date
-curl -X PUT "$BASE/cards/Card_TaskId01" \
+curl $AUTH -X PUT "$BASE/cards/Card_TaskId01" \
   -H "Content-Type: application/json" \
   -d '{"dueDate": "2026-03-15T00:00:00.000Z"}'
 
 # Clear the due date
-curl -X PUT "$BASE/cards/Card_TaskId01" \
+curl $AUTH -X PUT "$BASE/cards/Card_TaskId01" \
   -H "Content-Type: application/json" \
   -d '{"dueDate": null}'
 ```
@@ -337,21 +364,21 @@ curl -X PUT "$BASE/cards/Card_TaskId01" \
 
 ```bash
 # Create the checklist
-curl -X POST "$BASE/checklists/" \
+curl $AUTH -X POST "$BASE/checklists/" \
   -H "Content-Type: application/json" \
   -d '{"cardPublicId": "Card_TaskId01", "name": "Launch Checklist"}'
 # → returns checklist with publicId, e.g. "Chk_Launch001"
 
 # Add items
-curl -X POST "$BASE/checklists/Chk_Launch001/items" \
+curl $AUTH -X POST "$BASE/checklists/Chk_Launch001/items" \
   -H "Content-Type: application/json" \
   -d '{"title": "Run full test suite"}'
 
-curl -X POST "$BASE/checklists/Chk_Launch001/items" \
+curl $AUTH -X POST "$BASE/checklists/Chk_Launch001/items" \
   -H "Content-Type: application/json" \
   -d '{"title": "Update changelog"}'
 
-curl -X POST "$BASE/checklists/Chk_Launch001/items" \
+curl $AUTH -X POST "$BASE/checklists/Chk_Launch001/items" \
   -H "Content-Type: application/json" \
   -d '{"title": "Deploy to production"}'
 ```
@@ -360,16 +387,16 @@ curl -X POST "$BASE/checklists/Chk_Launch001/items" \
 
 ```bash
 # Mark items as done
-curl -X PATCH "$BASE/checklists/items/ChkItem00001" \
+curl $AUTH -X PATCH "$BASE/checklists/items/ChkItem00001" \
   -H "Content-Type: application/json" \
   -d '{"completed": true}'
 
-curl -X PATCH "$BASE/checklists/items/ChkItem00002" \
+curl $AUTH -X PATCH "$BASE/checklists/items/ChkItem00002" \
   -H "Content-Type: application/json" \
   -d '{"completed": true}'
 
 # Undo if needed
-curl -X PATCH "$BASE/checklists/items/ChkItem00002" \
+curl $AUTH -X PATCH "$BASE/checklists/items/ChkItem00002" \
   -H "Content-Type: application/json" \
   -d '{"completed": false}'
 ```
@@ -378,29 +405,29 @@ curl -X PATCH "$BASE/checklists/items/ChkItem00002" \
 
 ```bash
 # Cards with overdue or today's due dates
-curl "$BASE/boards/Brd_AbCd1234?dueDateFilters=overdue&dueDateFilters=today"
+curl $AUTH "$BASE/boards/Brd_AbCd1234?dueDateFilters=overdue&dueDateFilters=today"
 
 # Cards in specific lists only
-curl "$BASE/boards/Brd_AbCd1234?lists=Lst_InProg001&lists=Lst_Review001"
+curl $AUTH "$BASE/boards/Brd_AbCd1234?lists=Lst_InProg001&lists=Lst_Review001"
 
 # Cards with specific labels
-curl "$BASE/boards/Brd_AbCd1234?labels=Lbl_Bug00001&labels=Lbl_Urgent001"
+curl $AUTH "$BASE/boards/Brd_AbCd1234?labels=Lbl_Bug00001&labels=Lbl_Urgent001"
 
 # Combine filters
-curl "$BASE/boards/Brd_AbCd1234?dueDateFilters=overdue&labels=Lbl_Urgent001"
+curl $AUTH "$BASE/boards/Brd_AbCd1234?dueDateFilters=overdue&labels=Lbl_Urgent001"
 ```
 
 ### 10. Clone a board from a template
 
 ```bash
 # Create a template board
-curl -X POST "$BASE/boards/" \
+curl $AUTH -X POST "$BASE/boards/" \
   -H "Content-Type: application/json" \
   -d '{"name": "Sprint Template", "lists": ["To Do", "In Progress", "Testing", "Done"], "labels": ["P0", "P1", "P2"], "type": "template"}'
 # → returns template board, e.g. publicId "Tmpl_Sprint01"
 
 # Clone it for a new sprint
-curl -X POST "$BASE/boards/" \
+curl $AUTH -X POST "$BASE/boards/" \
   -H "Content-Type: application/json" \
   -d '{"name": "Sprint 42", "lists": [], "labels": [], "sourceBoardPublicId": "Tmpl_Sprint01"}'
 ```
@@ -409,12 +436,12 @@ curl -X POST "$BASE/boards/" \
 
 ```bash
 # Rename a list
-curl -X PUT "$BASE/lists/Lst_InProg001" \
+curl $AUTH -X PUT "$BASE/lists/Lst_InProg001" \
   -H "Content-Type: application/json" \
   -d '{"name": "Work In Progress"}'
 
 # Move a list to position 0 (first column)
-curl -X PUT "$BASE/lists/Lst_Review001" \
+curl $AUTH -X PUT "$BASE/lists/Lst_Review001" \
   -H "Content-Type: application/json" \
   -d '{"index": 0}'
 ```
@@ -423,23 +450,23 @@ curl -X PUT "$BASE/lists/Lst_Review001" \
 
 ```bash
 # Create a new label
-curl -X POST "$BASE/labels/" \
+curl $AUTH -X POST "$BASE/labels/" \
   -H "Content-Type: application/json" \
   -d '{"name": "Blocked", "boardPublicId": "Brd_AbCd1234", "colourCode": "#dc2626"}'
 
 # Update its color
-curl -X PUT "$BASE/labels/Lbl_Blocked01" \
+curl $AUTH -X PUT "$BASE/labels/Lbl_Blocked01" \
   -H "Content-Type: application/json" \
   -d '{"name": "Blocked", "colourCode": "#991b1b"}'
 
 # Delete it (also removes from all cards)
-curl -X DELETE "$BASE/labels/Lbl_Blocked01"
+curl $AUTH -X DELETE "$BASE/labels/Lbl_Blocked01"
 ```
 
 ### 13. Add a list to an existing board
 
 ```bash
-curl -X POST "$BASE/lists/" \
+curl $AUTH -X POST "$BASE/lists/" \
   -H "Content-Type: application/json" \
   -d '{"name": "Deployed", "boardPublicId": "Brd_AbCd1234"}'
 ```
@@ -448,13 +475,13 @@ curl -X POST "$BASE/lists/" \
 
 ```bash
 # Soft-deletes the board, all its lists, and all cards
-curl -X DELETE "$BASE/boards/Brd_AbCd1234"
+curl $AUTH -X DELETE "$BASE/boards/Brd_AbCd1234"
 ```
 
 ### 15. Get system stats
 
 ```bash
-curl "$BASE/stats"
+curl $AUTH "$BASE/stats"
 # → {"users":1,"boards":3,"lists":12,"cards":47,"checklistItems":15,"checklists":5,"labels":9}
 ```
 
@@ -487,13 +514,13 @@ Knowledge item `type`: `"link" | "creator" | "tweet" | "instagram" | "tiktok" | 
 
 ```bash
 # All TikToks
-curl "$BASE/knowledge-items/search?type=tiktok"
+curl $AUTH "$BASE/knowledge-items/search?type=tiktok"
 
 # TikToks and Instagram posts
-curl "$BASE/knowledge-items/search?type=tiktok,instagram"
+curl $AUTH "$BASE/knowledge-items/search?type=tiktok,instagram"
 
 # YouTube items with a specific label
-curl "$BASE/knowledge-items/search?type=youtube&label=abc123def456"
+curl $AUTH "$BASE/knowledge-items/search?type=youtube&label=abc123def456"
 ```
 
 ### Knowledge Labels
@@ -507,16 +534,16 @@ curl "$BASE/knowledge-items/search?type=youtube&label=abc123def456"
 
 ```bash
 # Save a TikTok
-curl -X POST "$BASE/knowledge-items" \
+curl $AUTH -X POST "$BASE/knowledge-items" \
   -H "Content-Type: application/json" \
   -d '{"title": "Viral hook format", "type": "tiktok", "url": "https://tiktok.com/@user/video/123"}'
 
 # Create a label and tag the item
-curl -X POST "$BASE/knowledge-items/labels" \
+curl $AUTH -X POST "$BASE/knowledge-items/labels" \
   -H "Content-Type: application/json" \
   -d '{"name": "Repurpose", "colourCode": "#3b82f6"}'
 
-curl -X PUT "$BASE/knowledge-items/ItemPublicId/labels/LabelPublicId"
+curl $AUTH -X PUT "$BASE/knowledge-items/ItemPublicId/labels/LabelPublicId"
 ```
 
 ## Error Handling
@@ -528,13 +555,13 @@ All errors return JSON `{ error: string }` with standard HTTP status codes:
 
 ```bash
 # Example: creating a card with missing required field
-curl -X POST "$BASE/cards/" \
+curl $AUTH -X POST "$BASE/cards/" \
   -H "Content-Type: application/json" \
   -d '{"title": "Oops"}'
 # → 400 {"error": "..."}
 
 # Example: fetching a non-existent card
-curl "$BASE/cards/doesNotExist"
+curl $AUTH "$BASE/cards/doesNotExist"
 # → 404 {"error": "Card not found"}
 ```
 

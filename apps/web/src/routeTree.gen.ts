@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './app/__root'
+import { Route as LoginRouteImport } from './app/login'
 import { Route as IndexRouteImport } from './app/index'
 import { Route as TemplatesIndexRouteImport } from './app/templates.index'
 import { Route as SettingsIndexRouteImport } from './app/settings.index'
@@ -22,6 +23,11 @@ import { Route as ApiSplatRouteImport } from './app/api.$'
 import { Route as TemplatesBoardIdIndexRouteImport } from './app/templates.$boardId.index'
 import { Route as TemplatesBoardIdCardsCardIdRouteImport } from './app/templates.$boardId.cards.$cardId'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -86,6 +92,7 @@ const TemplatesBoardIdCardsCardIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/api/$': typeof ApiSplatRoute
   '/boards/$boardId': typeof BoardsBoardIdRoute
   '/cards/$cardId': typeof CardsCardIdRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/api/$': typeof ApiSplatRoute
   '/boards/$boardId': typeof BoardsBoardIdRoute
   '/cards/$cardId': typeof CardsCardIdRoute
@@ -115,6 +123,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/api/$': typeof ApiSplatRoute
   '/boards/$boardId': typeof BoardsBoardIdRoute
   '/cards/$cardId': typeof CardsCardIdRoute
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/api/$'
     | '/boards/$boardId'
     | '/cards/$cardId'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/api/$'
     | '/boards/$boardId'
     | '/cards/$cardId'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/login'
     | '/api/$'
     | '/boards/$boardId'
     | '/cards/$cardId'
@@ -174,6 +186,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
   ApiSplatRoute: typeof ApiSplatRoute
   BoardsBoardIdRoute: typeof BoardsBoardIdRoute
   CardsCardIdRoute: typeof CardsCardIdRoute
@@ -189,6 +202,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -278,6 +298,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
   ApiSplatRoute: ApiSplatRoute,
   BoardsBoardIdRoute: BoardsBoardIdRoute,
   CardsCardIdRoute: CardsCardIdRoute,

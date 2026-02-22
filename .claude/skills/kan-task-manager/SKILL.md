@@ -27,7 +27,49 @@ Soft-delete is used throughout: deleted records keep their data but are excluded
 
 ## Authentication
 
-No token-based auth. A default user (`local@kan.dev`) is auto-created and injected into every request.
+All protected endpoints require authentication. There are two methods:
+
+### 1. User API Key (recommended for agent/direct use)
+
+Include the key as a Bearer token on every request:
+
+```
+Authorization: Bearer kan_<token>
+```
+
+Keys never expire. Ask the user to provide their API key, or generate one.
+
+#### Generating a key
+
+A key can only be generated while authenticated via session (browser login). Once generated, store it for future use.
+
+```
+POST /api/user-api-keys
+```
+
+No body required. Returns:
+
+```json
+{ "key": "kan_abc123..." }
+```
+
+#### Example request with key
+
+```bash
+curl -H "Authorization: Bearer kan_abc123..." https://kan.simonbalfe.com/api/boards
+```
+
+### 2. Session Cookie (browser/proxy flow)
+
+Authenticate via better-auth:
+
+```
+POST /api/auth/sign-in/email
+Content-Type: application/json
+{ "email": "you@example.com", "password": "yourpassword" }
+```
+
+The session cookie is then sent automatically by the browser on subsequent requests. The web app proxy injects the required `x-api-key` header server-side — you do not need to send it manually.
 
 ## Endpoints
 
