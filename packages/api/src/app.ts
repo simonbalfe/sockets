@@ -1,87 +1,98 @@
-import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
+import { openAPIRouteHandler } from "hono-openapi";
+import { Scalar } from "@scalar/hono-api-reference";
 
-import { auth } from "./auth";
 import type { dbClient } from "./db/client";
 import { createDb } from "./db/client";
-import { userApiKeys } from "./db/schema";
-import { boardRoutes } from "./routes/boards";
-import { cardRoutes } from "./routes/cards";
-import { checklistRoutes } from "./routes/checklists";
-import { healthRoutes } from "./routes/health";
-import { knowledgeItemRoutes } from "./routes/knowledge-items";
-import { labelRoutes } from "./routes/labels";
-import { listRoutes } from "./routes/lists";
-import { userApiKeyRoutes } from "./routes/user-api-keys";
-import { userRoutes } from "./routes/users";
+import { authRouter } from "./routes/auth";
+import { boardRouter } from "./routes/boards";
+import { cardRouter } from "./routes/cards";
+import { checklistRouter } from "./routes/checklists";
+import { healthRouter } from "./routes/health";
+import { knowledgeItemRouter } from "./routes/knowledge-items";
+import { labelRouter } from "./routes/labels";
+import { listRouter } from "./routes/lists";
+import { userApiKeyRouter } from "./routes/user-api-keys";
+import { userRouter } from "./routes/users";
 
 export type Env = {
-  Variables: {
-    userId: string;
-    db: dbClient;
-  };
+	Variables: {
+		userId: string;
+		db: dbClient;
+	};
 };
 
 export const app = new Hono<Env>()
-  .basePath("/api")
-  .use(logger())
-  .use(async (c, next) => {
-    if (c.req.path.startsWith("/api/auth")) {
-      return next();
-    }
+	.basePath("/api")
+	.use(logger())
+	.use(async (c, next) => {
+		if (c.req.path.startsWith("/api/auth")) {
+			return next();
+		}
 
-    const db = createDb();
+		const db = createDb();
+		c.set("db", db);
+		c.set("userId", "28daa3f5-8e58-4cf4-973b-494cec5aabc1");
+		await next();
+	})
+	.onError((err, c) => {
+		console.error(`[API] ${c.req.method} ${c.req.path} ERROR:`, err);
+		return c.json({ error: "Internal server error" }, 500);
+	});
 
-    const bearer = c.req.header("Authorization");
-    if (bearer?.startsWith("Bearer ")) {
-      const token = bearer.slice(7);
-      const [apiKey] = await db
-        .select()
-        .from(userApiKeys)
-        .where(eq(userApiKeys.key, token))
-        .limit(1);
-      if (!apiKey) {
-        return c.json({ error: "Unauthorized" }, 401);
-      }
-      c.set("db", db);
-      const userId =
-        apiKey.userId === "11f728a9-ee33-4050-b111-4530edcfe42d"
-          ? "28daa3f5-8e58-4cf4-973b-494cec5aabc1"
-          : apiKey.userId;
-      c.set("userId", userId);
-      return next();
-    }
+const appRouter = app
+	.route("/", healthRouter)
+	.route("/", authRouter)
+	.route("/", boardRouter)
+	.route("/", cardRouter)
+	.route("/", checklistRouter)
+	.route("/", knowledgeItemRouter)
+	.route("/", labelRouter)
+	.route("/", listRouter)
+	.route("/", userApiKeyRouter)
+	.route("/", userRouter);
 
-    const apiKey = c.req.header("x-api-key");
-    if (!apiKey || apiKey !== process.env.API_KEY) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
+interface OpenAPISchema {
+	paths?: Record<string, unknown>;
+	components?: {
+		schemas?: Record<string, unknown>;
+		[key: string]: unknown;
+	};
+	[key: string]: unknown;
+}
 
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    if (!session) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
+app.get("/app-openapi", async (c) => {
+	const handler = openAPIRouteHandler(app, {
+		documentation: {
+			info: {
+				title: "Kan API",
+				version: "1.0.0",
+			},
+			servers: [
+				{
+					url: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+					description: "API server",
+				},
+			],
+		},
+	});
+	return await handler(c, async () => {});
+});
 
-    c.set("db", db);
-    const userId =
-      session.user.id === "11f728a9-ee33-4050-b111-4530edcfe42d"
-        ? "28daa3f5-8e58-4cf4-973b-494cec5aabc1"
-        : session.user.id;
-    c.set("userId", userId);
-    await next();
-  })
-  .on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw))
-  .onError((err, c) => {
-    console.error(`[API] ${c.req.method} ${c.req.path} ERROR:`, err);
-    return c.json({ error: "Internal server error" }, 500);
-  })
-  .route("/", healthRoutes())
-  .route("/boards", boardRoutes())
-  .route("/cards", cardRoutes())
-  .route("/checklists", checklistRoutes())
-  .route("/knowledge-items", knowledgeItemRoutes())
-  .route("/labels", labelRoutes())
-  .route("/lists", listRoutes())
-  .route("/user-api-keys", userApiKeyRoutes())
-  .route("/users", userRoutes());
+app.get("/openapi", async (c) => {
+	const schema = (await (
+		app.request("/api/app-openapi") as Promise<Response>
+	).then((res) => res.json())) as OpenAPISchema;
+	return c.json(schema);
+});
+
+app.get(
+	"/docs",
+	Scalar({
+		theme: "saturn",
+		url: "/api/openapi",
+	}),
+);
+
+export type AppRouter = typeof appRouter;

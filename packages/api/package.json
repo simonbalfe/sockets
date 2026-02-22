@@ -12,12 +12,15 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@hono/standard-validator": "^0.2.2",
     "@hono/zod-validator": "^0.4.3",
     "@neondatabase/serverless": "^1.0.0",
+    "@scalar/hono-api-reference": "^0.9.44",
     "better-auth": "^1.2.7",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.42.0",
     "hono": "^4.7.4",
+    "hono-openapi": "^1.2.0",
     "nanoid": "^5.0.9",
     "uuid": "^11.1.0",
     "zod": "^3.23.8"
