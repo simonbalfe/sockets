@@ -5,9 +5,19 @@ import { z } from "zod";
 import type { Env } from "../app";
 import * as knowledgeItemRepo from "../db/repository/knowledge-item.repo";
 import * as knowledgeLabelRepo from "../db/repository/knowledge-label.repo";
-import { knowledgeItemTypes } from "../db/schema";
+import { type KnowledgeItemType, knowledgeItemTypes } from "../db/schema";
 
 const knowledgeItemTypeSchema = z.enum(knowledgeItemTypes);
+
+const csvToArray = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((v) => (v ? (Array.isArray(v) ? v : v.split(",")) : undefined));
+
+const searchQuerySchema = z.object({
+  type: csvToArray,
+  label: csvToArray,
+});
 
 export const knowledgeItemRoutes = () =>
   new Hono<Env>()
@@ -94,6 +104,23 @@ export const knowledgeItemRoutes = () =>
       }
 
       return c.json({ success: true });
+    })
+
+    .get("/search", zValidator("query", searchQuerySchema), async (c) => {
+      const db = c.var.db;
+      const userId = c.get("userId");
+      const { type, label } = c.req.valid("query");
+
+      const validTypes = type?.filter((t): t is KnowledgeItemType =>
+        (knowledgeItemTypes as readonly string[]).includes(t),
+      );
+
+      return c.json(
+        await knowledgeItemRepo.getFiltered(db, userId, {
+          types: validTypes?.length ? validTypes : undefined,
+          labelPublicIds: label,
+        }),
+      );
     })
 
     .get("/:publicId", async (c) => {

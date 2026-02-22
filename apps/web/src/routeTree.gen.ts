@@ -15,6 +15,7 @@ import { Route as SettingsIndexRouteImport } from './app/settings.index'
 import { Route as KnowledgeIndexRouteImport } from './app/knowledge.index'
 import { Route as BoardsIndexRouteImport } from './app/boards.index'
 import { Route as SettingsAccountRouteImport } from './app/settings.account'
+import { Route as KnowledgePublicIdRouteImport } from './app/knowledge.$publicId'
 import { Route as CardsCardIdRouteImport } from './app/cards.$cardId'
 import { Route as BoardsBoardIdRouteImport } from './app/boards.$boardId'
 import { Route as ApiSplatRouteImport } from './app/api.$'
@@ -51,6 +52,11 @@ const SettingsAccountRoute = SettingsAccountRouteImport.update({
   path: '/settings/account',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KnowledgePublicIdRoute = KnowledgePublicIdRouteImport.update({
+  id: '/knowledge/$publicId',
+  path: '/knowledge/$publicId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CardsCardIdRoute = CardsCardIdRouteImport.update({
   id: '/cards/$cardId',
   path: '/cards/$cardId',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/api/$': typeof ApiSplatRoute
   '/boards/$boardId': typeof BoardsBoardIdRoute
   '/cards/$cardId': typeof CardsCardIdRoute
+  '/knowledge/$publicId': typeof KnowledgePublicIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/boards/': typeof BoardsIndexRoute
   '/knowledge/': typeof KnowledgeIndexRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/api/$': typeof ApiSplatRoute
   '/boards/$boardId': typeof BoardsBoardIdRoute
   '/cards/$cardId': typeof CardsCardIdRoute
+  '/knowledge/$publicId': typeof KnowledgePublicIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/boards': typeof BoardsIndexRoute
   '/knowledge': typeof KnowledgeIndexRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/api/$': typeof ApiSplatRoute
   '/boards/$boardId': typeof BoardsBoardIdRoute
   '/cards/$cardId': typeof CardsCardIdRoute
+  '/knowledge/$publicId': typeof KnowledgePublicIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/boards/': typeof BoardsIndexRoute
   '/knowledge/': typeof KnowledgeIndexRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/boards/$boardId'
     | '/cards/$cardId'
+    | '/knowledge/$publicId'
     | '/settings/account'
     | '/boards/'
     | '/knowledge/'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/boards/$boardId'
     | '/cards/$cardId'
+    | '/knowledge/$publicId'
     | '/settings/account'
     | '/boards'
     | '/knowledge'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/boards/$boardId'
     | '/cards/$cardId'
+    | '/knowledge/$publicId'
     | '/settings/account'
     | '/boards/'
     | '/knowledge/'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   ApiSplatRoute: typeof ApiSplatRoute
   BoardsBoardIdRoute: typeof BoardsBoardIdRoute
   CardsCardIdRoute: typeof CardsCardIdRoute
+  KnowledgePublicIdRoute: typeof KnowledgePublicIdRoute
   SettingsAccountRoute: typeof SettingsAccountRoute
   BoardsIndexRoute: typeof BoardsIndexRoute
   KnowledgeIndexRoute: typeof KnowledgeIndexRoute
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/knowledge/$publicId': {
+      id: '/knowledge/$publicId'
+      path: '/knowledge/$publicId'
+      fullPath: '/knowledge/$publicId'
+      preLoaderRoute: typeof KnowledgePublicIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cards/$cardId': {
       id: '/cards/$cardId'
       path: '/cards/$cardId'
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSplatRoute: ApiSplatRoute,
   BoardsBoardIdRoute: BoardsBoardIdRoute,
   CardsCardIdRoute: CardsCardIdRoute,
+  KnowledgePublicIdRoute: KnowledgePublicIdRoute,
   SettingsAccountRoute: SettingsAccountRoute,
   BoardsIndexRoute: BoardsIndexRoute,
   KnowledgeIndexRoute: KnowledgeIndexRoute,

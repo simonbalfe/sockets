@@ -138,6 +138,8 @@ export const apiKeys = {
   },
   knowledgeItem: {
     all: () => ["knowledgeItem", "all"] as const,
+    search: (input: { types?: string[]; labels?: string[] }) =>
+      ["knowledgeItem", "search", input] as const,
     byId: (input: { publicId: string }) =>
       ["knowledgeItem", "byId", input] as const,
   },
@@ -400,6 +402,15 @@ export const api = {
 
   knowledgeItem: {
     all: () => get<ApiKnowledgeItem[]>("/knowledge-items"),
+
+    search: (input: { types?: string[]; labels?: string[] }) => {
+      const params = new URLSearchParams();
+      if (input.types?.length) params.set("type", input.types.join(","));
+      if (input.labels?.length) params.set("label", input.labels.join(","));
+      return get<ApiKnowledgeItem[]>(
+        `/knowledge-items/search?${params.toString()}`,
+      );
+    },
 
     byId: (input: { publicId: string }) =>
       get<ApiKnowledgeItem>(`/knowledge-items/${input.publicId}`),

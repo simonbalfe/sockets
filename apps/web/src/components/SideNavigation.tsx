@@ -9,10 +9,6 @@ import {
 import { twMerge } from "tailwind-merge";
 import boardsIconDark from "~/assets/boards-dark.json";
 import boardsIconLight from "~/assets/boards-light.json";
-import settingsIconDark from "~/assets/settings-dark.json";
-import settingsIconLight from "~/assets/settings-light.json";
-import templatesIconDark from "~/assets/templates-dark.json";
-import templatesIconLight from "~/assets/templates-light.json";
 import ReactiveButton from "~/components/ReactiveButton";
 import UserMenu from "~/components/UserMenu";
 import { useTheme } from "~/providers/theme";
@@ -66,16 +62,6 @@ export default function SideNavigation({
       name: "Boards",
       href: "/boards",
       icon: isDarkMode ? boardsIconDark : boardsIconLight,
-    },
-    {
-      name: "Templates",
-      href: "/templates",
-      icon: isDarkMode ? templatesIconDark : templatesIconLight,
-    },
-    {
-      name: "Settings",
-      href: "/settings",
-      icon: isDarkMode ? settingsIconDark : settingsIconLight,
     },
   ];
 
