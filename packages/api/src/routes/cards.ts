@@ -1,6 +1,6 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
+import { describeRoute, validator } from "hono-openapi";
+
 import { z } from "zod";
 
 import type { Env } from "../app";
@@ -8,6 +8,27 @@ import * as cardRepo from "../db/repository/card.repo";
 import * as labelRepo from "../db/repository/label.repo";
 import * as listRepo from "../db/repository/list.repo";
 import { movePositionSchema } from "../lib/schemas";
+
+const createCardSchema = z.object({
+	title: z.string().min(1).max(2000),
+	description: z.string().max(10000),
+	listPublicId: z.string(),
+	labelPublicIds: z.array(z.string()).optional(),
+	position: movePositionSchema,
+	dueDate: z.string().nullable().optional(),
+});
+
+const updateCardSchema = z
+	.object({
+		title: z.string().optional(),
+		description: z.string().optional(),
+		index: z.number().optional(),
+		listPublicId: z.string().optional(),
+		dueDate: z.string().nullable().optional(),
+	})
+	.refine((data) => Object.keys(data).length >= 1, {
+		message: "At least one field must be provided",
+	});
 
 export const cardRouter = new Hono<Env>()
 	.basePath("/cards")
@@ -23,17 +44,7 @@ export const cardRouter = new Hono<Env>()
 				500: { description: "Failed to create card" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				title: z.string().min(1).max(2000),
-				description: z.string().max(10000),
-				listPublicId: z.string(),
-				labelPublicIds: z.array(z.string()).optional(),
-				position: movePositionSchema,
-				dueDate: z.string().nullable().optional(),
-			}),
-		),
+		validator("json", createCardSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
@@ -121,20 +132,7 @@ export const cardRouter = new Hono<Env>()
 				500: { description: "Failed to update card" },
 			},
 		}),
-		zValidator(
-			"json",
-			z
-				.object({
-					title: z.string().optional(),
-					description: z.string().optional(),
-					index: z.number().optional(),
-					listPublicId: z.string().optional(),
-					dueDate: z.string().nullable().optional(),
-				})
-				.refine((data) => Object.keys(data).length >= 1, {
-					message: "At least one field must be provided",
-				}),
-		),
+		validator("json", updateCardSchema),
 		async (c) => {
 			const db = c.var.db;
 			const cardPublicId = c.req.param("cardPublicId");

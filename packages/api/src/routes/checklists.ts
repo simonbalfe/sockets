@@ -1,11 +1,34 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
+import { describeRoute, validator } from "hono-openapi";
+
 import { z } from "zod";
 
 import type { Env } from "../app";
 import * as cardRepo from "../db/repository/card.repo";
 import * as checklistRepo from "../db/repository/checklist.repo";
+
+const createChecklistSchema = z.object({
+	cardPublicId: z.string(),
+	name: z.string().min(1).max(255),
+});
+
+const updateChecklistSchema = z.object({
+	name: z.string().min(1).max(255),
+});
+
+const createChecklistItemSchema = z.object({
+	title: z.string().min(1).max(500),
+});
+
+const updateChecklistItemSchema = z
+	.object({
+		title: z.string().optional(),
+		completed: z.boolean().optional(),
+		index: z.number().optional(),
+	})
+	.refine((data) => Object.keys(data).length >= 1, {
+		message: "At least one field must be provided",
+	});
 
 export const checklistRouter = new Hono<Env>()
 	.basePath("/checklists")
@@ -21,13 +44,7 @@ export const checklistRouter = new Hono<Env>()
 				500: { description: "Failed to create checklist" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				cardPublicId: z.string(),
-				name: z.string().min(1).max(255),
-			}),
-		),
+		validator("json", createChecklistSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
@@ -64,12 +81,7 @@ export const checklistRouter = new Hono<Env>()
 				500: { description: "Failed to update checklist" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				name: z.string().min(1).max(255),
-			}),
-		),
+		validator("json", updateChecklistSchema),
 		async (c) => {
 			const db = c.var.db;
 			const checklistPublicId = c.req.param("checklistPublicId");
@@ -148,12 +160,7 @@ export const checklistRouter = new Hono<Env>()
 				500: { description: "Failed to create checklist item" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				title: z.string().min(1).max(500),
-			}),
-		),
+		validator("json", createChecklistItemSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
@@ -194,18 +201,7 @@ export const checklistRouter = new Hono<Env>()
 				500: { description: "Failed to update checklist item" },
 			},
 		}),
-		zValidator(
-			"json",
-			z
-				.object({
-					title: z.string().optional(),
-					completed: z.boolean().optional(),
-					index: z.number().optional(),
-				})
-				.refine((data) => Object.keys(data).length >= 1, {
-					message: "At least one field must be provided",
-				}),
-		),
+		validator("json", updateChecklistItemSchema),
 		async (c) => {
 			const db = c.var.db;
 			const checklistItemPublicId = c.req.param("checklistItemPublicId");

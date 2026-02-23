@@ -2,10 +2,10 @@ import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { openAPIRouteHandler } from "hono-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
+import { auth } from "./auth";
 
 import type { dbClient } from "./db/client";
 import { createDb } from "./db/client";
-import { authRouter } from "./routes/auth";
 import { boardRouter } from "./routes/boards";
 import { cardRouter } from "./routes/cards";
 import { checklistRouter } from "./routes/checklists";
@@ -26,11 +26,8 @@ export type Env = {
 export const app = new Hono<Env>()
 	.basePath("/api")
 	.use(logger())
+	.use("/auth/*", (c) => auth.handler(c.req.raw))
 	.use(async (c, next) => {
-		if (c.req.path.startsWith("/api/auth")) {
-			return next();
-		}
-
 		const db = createDb();
 		c.set("db", db);
 		c.set("userId", "28daa3f5-8e58-4cf4-973b-494cec5aabc1");
@@ -43,7 +40,6 @@ export const app = new Hono<Env>()
 
 const appRouter = app
 	.route("/", healthRouter)
-	.route("/", authRouter)
 	.route("/", boardRouter)
 	.route("/", cardRouter)
 	.route("/", checklistRouter)
@@ -81,18 +77,26 @@ app.get("/app-openapi", async (c) => {
 });
 
 app.get("/openapi", async (c) => {
-	const schema = (await (
-		app.request("/api/app-openapi") as Promise<Response>
-	).then((res) => res.json())) as OpenAPISchema;
-	return c.json(schema);
+	const [appSchema, authSchema] = await Promise.all([
+		(app.request("/api/app-openapi") as Promise<Response>).then((res) =>
+			res.json(),
+		) as Promise<OpenAPISchema>,
+		auth.api.generateOpenAPISchema(),
+	]);
+
+	return c.json({
+		...appSchema,
+		paths: { ...appSchema.paths, ...(authSchema as OpenAPISchema).paths },
+		components: {
+			...appSchema.components,
+			schemas: {
+				...appSchema.components?.schemas,
+				...((authSchema as OpenAPISchema).components?.schemas ?? {}),
+			},
+		},
+	});
 });
 
-app.get(
-	"/docs",
-	Scalar({
-		theme: "saturn",
-		url: "/api/openapi",
-	}),
-);
+app.get("/docs", Scalar({ theme: "saturn", url: "/api/openapi" }));
 
 export type AppRouter = typeof appRouter;

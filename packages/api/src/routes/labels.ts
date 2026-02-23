@@ -1,6 +1,6 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
+import { describeRoute, validator } from "hono-openapi";
+
 import { z } from "zod";
 
 import type { Env } from "../app";
@@ -8,6 +8,17 @@ import * as boardRepo from "../db/repository/board.repo";
 import * as cardRepo from "../db/repository/card.repo";
 import * as labelRepo from "../db/repository/label.repo";
 import { hexColourCodeSchema } from "../lib/schemas";
+
+const createLabelSchema = z.object({
+	name: z.string().min(1).max(36),
+	boardPublicId: z.string(),
+	colourCode: hexColourCodeSchema,
+});
+
+const updateLabelSchema = z.object({
+	name: z.string().min(1).max(36),
+	colourCode: hexColourCodeSchema,
+});
 
 export const labelRouter = new Hono<Env>()
 	.basePath("/labels")
@@ -51,14 +62,7 @@ export const labelRouter = new Hono<Env>()
 				500: { description: "Failed to create label" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				name: z.string().min(1).max(36),
-				boardPublicId: z.string(),
-				colourCode: hexColourCodeSchema,
-			}),
-		),
+		validator("json", createLabelSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
@@ -103,13 +107,7 @@ export const labelRouter = new Hono<Env>()
 				500: { description: "Failed to update label" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				name: z.string().min(1).max(36),
-				colourCode: hexColourCodeSchema,
-			}),
-		),
+		validator("json", updateLabelSchema),
 		async (c) => {
 			const db = c.var.db;
 			const labelPublicId = c.req.param("labelPublicId");

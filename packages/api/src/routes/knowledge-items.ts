@@ -1,6 +1,6 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
+import { describeRoute, validator } from "hono-openapi";
+
 import { z } from "zod";
 
 import type { Env } from "../app";
@@ -19,6 +19,34 @@ const searchQuerySchema = z.object({
 	type: csvToArray,
 	label: csvToArray,
 });
+
+const createKnowledgeLabelSchema = z.object({
+	name: z.string().min(1).max(255),
+	colourCode: z.string().min(1).max(12),
+});
+
+const updateKnowledgeLabelSchema = z.object({
+	name: z.string().min(1).max(255),
+	colourCode: z.string().min(1).max(12),
+});
+
+const createKnowledgeItemSchema = z.object({
+	title: z.string().min(1).max(255),
+	type: knowledgeItemTypeSchema,
+	url: z.string().nullable().optional(),
+	description: z.string().nullable().optional(),
+});
+
+const updateKnowledgeItemSchema = z
+	.object({
+		title: z.string().min(1).max(255).optional(),
+		type: knowledgeItemTypeSchema.optional(),
+		url: z.string().nullable().optional(),
+		description: z.string().nullable().optional(),
+	})
+	.refine((data) => Object.keys(data).length >= 1, {
+		message: "At least one field must be provided",
+	});
 
 export const knowledgeItemRouter = new Hono<Env>()
 	.basePath("/knowledge-items")
@@ -63,13 +91,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 				500: { description: "Failed to create label" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				name: z.string().min(1).max(255),
-				colourCode: z.string().min(1).max(12),
-			}),
-		),
+		validator("json", createKnowledgeLabelSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
@@ -100,13 +122,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 				404: { description: "Label not found" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				name: z.string().min(1).max(255),
-				colourCode: z.string().min(1).max(12),
-			}),
-		),
+		validator("json", updateKnowledgeLabelSchema),
 		async (c) => {
 			const db = c.var.db;
 			const labelPublicId = c.req.param("labelPublicId");
@@ -163,7 +179,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 			description: "Filter knowledge items by type and labels",
 			responses: { 200: { description: "Filtered knowledge items" } },
 		}),
-		zValidator("query", searchQuerySchema),
+		validator("query", searchQuerySchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
@@ -217,15 +233,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 				500: { description: "Failed to create knowledge item" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				title: z.string().min(1).max(255),
-				type: knowledgeItemTypeSchema,
-				url: z.string().nullable().optional(),
-				description: z.string().nullable().optional(),
-			}),
-		),
+		validator("json", createKnowledgeItemSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
@@ -259,19 +267,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 				500: { description: "Failed to update knowledge item" },
 			},
 		}),
-		zValidator(
-			"json",
-			z
-				.object({
-					title: z.string().min(1).max(255).optional(),
-					type: knowledgeItemTypeSchema.optional(),
-					url: z.string().nullable().optional(),
-					description: z.string().nullable().optional(),
-				})
-				.refine((data) => Object.keys(data).length >= 1, {
-					message: "At least one field must be provided",
-				}),
-		),
+		validator("json", updateKnowledgeItemSchema),
 		async (c) => {
 			const db = c.var.db;
 			const publicId = c.req.param("publicId");

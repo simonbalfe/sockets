@@ -1,12 +1,26 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
+import { describeRoute, validator } from "hono-openapi";
+
 import { z } from "zod";
 
 import type { Env } from "../app";
 import * as boardRepo from "../db/repository/board.repo";
 import * as cardRepo from "../db/repository/card.repo";
 import * as listRepo from "../db/repository/list.repo";
+
+const createListSchema = z.object({
+	name: z.string().min(1),
+	boardPublicId: z.string(),
+});
+
+const updateListSchema = z
+	.object({
+		name: z.string().optional(),
+		index: z.number().optional(),
+	})
+	.refine((data) => Object.keys(data).length >= 1, {
+		message: "At least one field must be provided",
+	});
 
 export const listRouter = new Hono<Env>()
 	.basePath("/lists")
@@ -22,13 +36,7 @@ export const listRouter = new Hono<Env>()
 				500: { description: "Failed to create list" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				name: z.string().min(1),
-				boardPublicId: z.string(),
-			}),
-		),
+		validator("json", createListSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
@@ -68,17 +76,7 @@ export const listRouter = new Hono<Env>()
 				500: { description: "Failed to update list" },
 			},
 		}),
-		zValidator(
-			"json",
-			z
-				.object({
-					name: z.string().optional(),
-					index: z.number().optional(),
-				})
-				.refine((data) => Object.keys(data).length >= 1, {
-					message: "At least one field must be provided",
-				}),
-		),
+		validator("json", updateListSchema),
 		async (c) => {
 			const db = c.var.db;
 			const listPublicId = c.req.param("listPublicId");

@@ -102,6 +102,12 @@ interface ApiUser {
   image: string | null;
 }
 
+interface ApiUserApiKey {
+  id: string;
+  key: string;
+  createdAt: string;
+}
+
 interface BoardByIdInput {
   boardPublicId: string;
   members?: string[];
@@ -148,6 +154,9 @@ export const apiKeys = {
   },
   user: {
     getUser: () => ["user", "getUser"] as const,
+  },
+  userApiKey: {
+    list: () => ["userApiKey", "list"] as const,
   },
   health: {
     health: () => ["health"] as const,
@@ -473,6 +482,15 @@ export const api = {
 
     update: (input: { name?: string; image?: string }) =>
       put<{ name: string | null; image: string | null }>("/users", input),
+  },
+
+  userApiKey: {
+    list: () => get<ApiUserApiKey[]>("/user-api-keys"),
+
+    generate: () => post<{ key: string }>("/user-api-keys", {}),
+
+    revoke: (input: { id: string }) =>
+      del<{ success: boolean }>(`/user-api-keys/${input.id}`),
   },
 
   health: {

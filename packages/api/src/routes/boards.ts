@@ -1,6 +1,6 @@
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
+import { describeRoute, validator } from "hono-openapi";
+
 import { z } from "zod";
 
 import type { Env } from "../app";
@@ -20,6 +20,24 @@ import {
 	generateUID,
 } from "../lib/utils";
 
+const createBoardSchema = z.object({
+	name: z.string().min(1).max(100),
+	lists: z.array(z.string()),
+	labels: z.array(z.string()),
+	type: boardTypeSchema.optional(),
+	sourceBoardPublicId: z.string().optional(),
+});
+
+const updateBoardSchema = z
+	.object({
+		name: z.string().optional(),
+		slug: z.string().optional(),
+		visibility: boardVisibilitySchema.optional(),
+	})
+	.refine((data) => Object.keys(data).length >= 1, {
+		message: "At least one field must be provided",
+	});
+
 export const boardRouter = new Hono<Env>()
 	.basePath("/boards")
 	.get(
@@ -30,7 +48,7 @@ export const boardRouter = new Hono<Env>()
 			description: "List all boards for the authenticated user",
 			responses: { 200: { description: "List of boards" } },
 		}),
-		zValidator(
+		validator(
 			"query",
 			z.object({
 				type: boardTypeSchema.optional(),
@@ -55,7 +73,7 @@ export const boardRouter = new Hono<Env>()
 				404: { description: "Board not found" },
 			},
 		}),
-		zValidator(
+		validator(
 			"query",
 			z.object({
 				members: z.union([z.array(z.string()), z.string()]).optional(),
@@ -125,7 +143,7 @@ export const boardRouter = new Hono<Env>()
 				404: { description: "Board not found" },
 			},
 		}),
-		zValidator(
+		validator(
 			"query",
 			z.object({
 				members: z.union([z.array(z.string()), z.string()]).optional(),
@@ -188,16 +206,7 @@ export const boardRouter = new Hono<Env>()
 				500: { description: "Failed to create board" },
 			},
 		}),
-		zValidator(
-			"json",
-			z.object({
-				name: z.string().min(1).max(100),
-				lists: z.array(z.string()),
-				labels: z.array(z.string()),
-				type: boardTypeSchema.optional(),
-				sourceBoardPublicId: z.string().optional(),
-			}),
-		),
+		validator("json", createBoardSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
@@ -304,18 +313,7 @@ export const boardRouter = new Hono<Env>()
 				500: { description: "Failed to update board" },
 			},
 		}),
-		zValidator(
-			"json",
-			z
-				.object({
-					name: z.string().optional(),
-					slug: z.string().optional(),
-					visibility: boardVisibilitySchema.optional(),
-				})
-				.refine((data) => Object.keys(data).length >= 1, {
-					message: "At least one field must be provided",
-				}),
-		),
+		validator("json", updateBoardSchema),
 		async (c) => {
 			const db = c.var.db;
 			const boardPublicId = c.req.param("boardPublicId");
@@ -410,7 +408,7 @@ export const boardRouter = new Hono<Env>()
 				404: { description: "Board not found" },
 			},
 		}),
-		zValidator(
+		validator(
 			"query",
 			z.object({
 				boardSlug: z.string(),
