@@ -5,7 +5,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
   "vars": {
-    "VITE_PUBLIC_URL": "https://kan.simonbalfe.com"
+    "VITE_PUBLIC_URL": "https://kan.simonbalfe.com",
+    "BETTER_AUTH_URL": "https://kan.simonbalfe.com"
   },
   "routes": [
     {

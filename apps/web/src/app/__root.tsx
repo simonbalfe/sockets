@@ -45,16 +45,12 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [session, isPending, pathname, navigate]);
 
-  if (isPending) {
+  if (isPending || (!session && pathname !== "/login")) {
     return (
       <div className="flex h-screen items-center justify-center bg-light-100 dark:bg-dark-100">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-light-300 border-t-light-900 dark:border-dark-300 dark:border-t-dark-900" />
       </div>
     );
-  }
-
-  if (!session && pathname !== "/login") {
-    return null;
   }
 
   return <>{children}</>;
