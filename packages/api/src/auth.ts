@@ -1,11 +1,15 @@
+import { neon } from "@neondatabase/serverless";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { drizzle } from "drizzle-orm/neon-http";
 import { openAPI } from "better-auth/plugins";
 
-import { createDb } from "./db/client";
 import { accounts, sessions, users, verifications } from "./db/schema";
 
-const db = createDb();
+const sql = neon(process.env.POSTGRES_URL!);
+const db = drizzle(sql, {
+	schema: { user: users, session: sessions, account: accounts, verification: verifications },
+});
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
