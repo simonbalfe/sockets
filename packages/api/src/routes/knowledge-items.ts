@@ -7,6 +7,7 @@ import type { Env } from "../app";
 import * as knowledgeItemRepo from "../db/repository/knowledge-item.repo";
 import * as knowledgeLabelRepo from "../db/repository/knowledge-label.repo";
 import { type KnowledgeItemType, knowledgeItemTypes } from "../db/schema";
+import { deleteObject, generateDownloadUrl } from "../lib/r2";
 
 const knowledgeItemTypeSchema = z.enum(knowledgeItemTypes);
 
@@ -35,6 +36,9 @@ const createKnowledgeItemSchema = z.object({
 	type: knowledgeItemTypeSchema,
 	url: z.string().nullable().optional(),
 	description: z.string().nullable().optional(),
+	fileKey: z.string().nullable().optional(),
+	fileSize: z.number().int().positive().nullable().optional(),
+	mimeType: z.string().max(255).nullable().optional(),
 });
 
 const updateKnowledgeItemSchema = z
@@ -43,10 +47,35 @@ const updateKnowledgeItemSchema = z
 		type: knowledgeItemTypeSchema.optional(),
 		url: z.string().nullable().optional(),
 		description: z.string().nullable().optional(),
+		fileKey: z.string().nullable().optional(),
+		fileSize: z.number().int().positive().nullable().optional(),
+		mimeType: z.string().max(255).nullable().optional(),
 	})
 	.refine((data) => Object.keys(data).length >= 1, {
 		message: "At least one field must be provided",
 	});
+
+const FILE_TYPES = new Set(["image", "video", "pdf", "audio"]);
+
+async function attachFileUrls<
+	T extends { fileKey: string | null; [key: string]: unknown },
+>(items: T[]) {
+	return Promise.all(
+		items.map(async (item) => ({
+			...item,
+			fileUrl: item.fileKey ? await generateDownloadUrl(item.fileKey) : null,
+		})),
+	);
+}
+
+async function attachFileUrl<
+	T extends { fileKey: string | null; [key: string]: unknown },
+>(item: T) {
+	return {
+		...item,
+		fileUrl: item.fileKey ? await generateDownloadUrl(item.fileKey) : null,
+	};
+}
 
 export const knowledgeItemRouter = new Hono<Env>()
 	.basePath("/knowledge-items")
@@ -61,7 +90,8 @@ export const knowledgeItemRouter = new Hono<Env>()
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
-			return c.json(await knowledgeItemRepo.getAllByUserId(db, userId));
+			const items = await knowledgeItemRepo.getAllByUserId(db, userId);
+			return c.json(await attachFileUrls(items));
 		},
 	)
 
@@ -189,12 +219,11 @@ export const knowledgeItemRouter = new Hono<Env>()
 				(knowledgeItemTypes as readonly string[]).includes(t),
 			);
 
-			return c.json(
-				await knowledgeItemRepo.getFiltered(db, userId, {
-					types: validTypes?.length ? validTypes : undefined,
-					labelPublicIds: label,
-				}),
-			);
+			const items = await knowledgeItemRepo.getFiltered(db, userId, {
+				types: validTypes?.length ? validTypes : undefined,
+				labelPublicIds: label,
+			});
+			return c.json(await attachFileUrls(items));
 		},
 	)
 
@@ -218,7 +247,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 				return c.json({ error: "Knowledge item not found" }, 404);
 			}
 
-			return c.json(item);
+			return c.json(await attachFileUrl(item));
 		},
 	)
 
@@ -242,8 +271,11 @@ export const knowledgeItemRouter = new Hono<Env>()
 			const result = await knowledgeItemRepo.create(db, {
 				title: body.title,
 				type: body.type,
-				url: body.url,
+				url: FILE_TYPES.has(body.type) ? null : body.url,
 				description: body.description,
+				fileKey: FILE_TYPES.has(body.type) ? body.fileKey : null,
+				fileSize: FILE_TYPES.has(body.type) ? body.fileSize : null,
+				mimeType: FILE_TYPES.has(body.type) ? body.mimeType : null,
 				createdBy: userId,
 			});
 
@@ -251,7 +283,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 				return c.json({ error: "Failed to create knowledge item" }, 500);
 			}
 
-			return c.json(result);
+			return c.json(await attachFileUrl(result));
 		},
 	)
 
@@ -278,19 +310,29 @@ export const knowledgeItemRouter = new Hono<Env>()
 				return c.json({ error: "Knowledge item not found" }, 404);
 			}
 
+			const effectiveType = body.type ?? existing.type;
+			const isFile = FILE_TYPES.has(effectiveType);
+
+			if (isFile && body.fileKey && existing.fileKey && body.fileKey !== existing.fileKey) {
+				await deleteObject(existing.fileKey).catch(() => {});
+			}
+
 			const result = await knowledgeItemRepo.update(db, {
 				publicId,
 				title: body.title,
 				description: body.description,
-				url: body.url,
+				url: isFile ? null : body.url,
 				type: body.type,
+				fileKey: isFile ? body.fileKey : null,
+				fileSize: isFile ? body.fileSize : null,
+				mimeType: isFile ? body.mimeType : null,
 			});
 
 			if (!result) {
 				return c.json({ error: "Failed to update knowledge item" }, 500);
 			}
 
-			return c.json(result);
+			return c.json(await attachFileUrl(result));
 		},
 	)
 
@@ -313,6 +355,10 @@ export const knowledgeItemRouter = new Hono<Env>()
 			const existing = await knowledgeItemRepo.getByPublicId(db, publicId);
 			if (!existing) {
 				return c.json({ error: "Knowledge item not found" }, 404);
+			}
+
+			if (existing.fileKey) {
+				await deleteObject(existing.fileKey).catch(() => {});
 			}
 
 			await knowledgeItemRepo.softDelete(db, {

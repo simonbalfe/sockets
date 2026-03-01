@@ -89,8 +89,12 @@ interface ApiKnowledgeItem {
   publicId: string;
   title: string;
   description: string | null;
-  type: "link" | "creator" | "tweet" | "instagram" | "tiktok" | "youtube" | "linkedin" | "image" | "pdf" | "audio" | "other";
+  type: "link" | "creator" | "tweet" | "instagram" | "tiktok" | "youtube" | "linkedin" | "image" | "video" | "pdf" | "audio" | "other";
   url: string | null;
+  fileKey: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  fileUrl: string | null;
   createdAt: string;
   labels: { knowledgeLabel: ApiKnowledgeLabel }[];
 }
@@ -220,7 +224,27 @@ async function del<T>(path: string): Promise<T> {
   return res.json();
 }
 
+interface PresignResponse {
+  uploadUrl: string;
+  fileKey: string;
+  fileSize: number;
+}
+
 export const api = {
+  upload: {
+    presign: (input: { fileName: string; mimeType: string; fileSize: number }) =>
+      post<PresignResponse>("/uploads/presign", input),
+
+    toR2: async (uploadUrl: string, file: File) => {
+      const res = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+    },
+  },
+
   board: {
     all: (input?: { type?: string }) =>
       get<ApiBoardSummary[]>(`/boards${qs({ type: input?.type })}`),
@@ -429,6 +453,9 @@ export const api = {
       type: ApiKnowledgeItem["type"];
       url?: string | null;
       description?: string | null;
+      fileKey?: string | null;
+      fileSize?: number | null;
+      mimeType?: string | null;
     }) => post<ApiKnowledgeItem>("/knowledge-items", input),
 
     update: (input: {
@@ -437,12 +464,18 @@ export const api = {
       type?: ApiKnowledgeItem["type"];
       url?: string | null;
       description?: string | null;
+      fileKey?: string | null;
+      fileSize?: number | null;
+      mimeType?: string | null;
     }) =>
       put<ApiKnowledgeItem>(`/knowledge-items/${input.publicId}`, {
         title: input.title,
         type: input.type,
         url: input.url,
         description: input.description,
+        fileKey: input.fileKey,
+        fileSize: input.fileSize,
+        mimeType: input.mimeType,
       }),
 
     delete: (input: { publicId: string }) =>

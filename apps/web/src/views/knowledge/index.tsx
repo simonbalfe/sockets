@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { HiOutlinePlusSmall } from "react-icons/hi2";
-import { TbArrowUpRight, TbBrandInstagram, TbBrandLinkedin, TbBrandTiktok, TbBrandX, TbBrandYoutube, TbExternalLink, TbFile, TbMusic, TbPhoto, TbUser, TbVideo } from "react-icons/tb";
+import { TbArrowUpRight, TbBrandInstagram, TbBrandLinkedin, TbBrandTiktok, TbBrandX, TbBrandYoutube, TbDownload, TbExternalLink, TbFile, TbMusic, TbPhoto, TbUser, TbVideo } from "react-icons/tb";
 
 import Badge from "~/components/Badge";
 import Button from "~/components/Button";
@@ -182,12 +182,32 @@ export default function KnowledgeView() {
                 }
                 className="flex flex-col rounded-lg border border-light-300 bg-white p-4 text-left transition-colors hover:border-light-600 dark:border-dark-300 dark:bg-dark-200 dark:hover:border-dark-500"
               >
+                {item.fileUrl && item.type === "image" && (
+                  <div className="mb-3 overflow-hidden rounded">
+                    <img
+                      src={item.fileUrl}
+                      alt={item.title}
+                      className="h-32 w-full object-cover"
+                    />
+                  </div>
+                )}
                 <div className="mb-3 flex w-full items-center justify-between">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-light-200 px-2 py-0.5 text-xs text-neutral-600 dark:bg-dark-400 dark:text-dark-900">
                     {typeIcons[item.type] ?? typeIcons.other}
                     {typeLabels[item.type] ?? "Other"}
                   </span>
                   <div className="flex items-center gap-0.5">
+                    {item.fileUrl && (
+                      <a
+                        href={item.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="shrink-0 rounded p-1 text-neutral-400 hover:bg-light-200 hover:text-neutral-600 dark:text-dark-700 dark:hover:bg-dark-400 dark:hover:text-dark-900"
+                      >
+                        <TbDownload className="h-4 w-4" />
+                      </a>
+                    )}
                     {item.url && (
                       <a
                         href={item.url}

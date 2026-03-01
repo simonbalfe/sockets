@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
-import { TbArrowLeft, TbBrandInstagram, TbBrandLinkedin, TbBrandTiktok, TbBrandX, TbBrandYoutube, TbExternalLink, TbFile, TbMusic, TbPhoto, TbUser, TbVideo } from "react-icons/tb";
+import { TbArrowLeft, TbBrandInstagram, TbBrandLinkedin, TbBrandTiktok, TbBrandX, TbBrandYoutube, TbDownload, TbExternalLink, TbFile, TbMusic, TbPhoto, TbUser, TbVideo } from "react-icons/tb";
 
 import Badge from "~/components/Badge";
 import LabelIcon from "~/components/LabelIcon";
@@ -93,6 +93,44 @@ export default function KnowledgeItemView() {
             <p className="mt-4 text-sm text-neutral-600 dark:text-dark-900">
               {item.description}
             </p>
+          )}
+
+          {item.fileUrl && item.type === "image" && (
+            <div className="mt-4 overflow-hidden rounded-lg">
+              <img
+                src={item.fileUrl}
+                alt={item.title}
+                className="max-h-96 w-full object-contain"
+              />
+            </div>
+          )}
+
+          {item.fileUrl && item.type === "video" && (
+            <div className="mt-4 overflow-hidden rounded-lg">
+              <video
+                src={item.fileUrl}
+                controls
+                className="max-h-96 w-full"
+              />
+            </div>
+          )}
+
+          {item.fileUrl && item.type === "audio" && (
+            <div className="mt-4">
+              <audio src={item.fileUrl} controls className="w-full" />
+            </div>
+          )}
+
+          {item.fileUrl && !["image", "video", "audio"].includes(item.type) && (
+            <a
+              href={item.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 dark:text-dark-800 dark:hover:text-dark-1000"
+            >
+              <TbDownload className="h-4 w-4" />
+              Download file
+            </a>
           )}
 
           {item.url && (

@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   bigint,
   bigserial,
+  integer,
   pgEnum,
   pgTable,
   primaryKey,
@@ -40,6 +41,9 @@ export const knowledgeItems = pgTable("knowledge_item", {
   description: text("description"),
   type: knowledgeItemTypeEnum("type").notNull().default("link"),
   url: text("url"),
+  fileKey: text("fileKey"),
+  fileSize: integer("fileSize"),
+  mimeType: varchar("mimeType", { length: 255 }),
   createdBy: uuid("createdBy").references(() => users.id, {
     onDelete: "set null",
   }),

@@ -10,6 +10,9 @@ const itemColumns = {
   description: true,
   type: true,
   url: true,
+  fileKey: true,
+  fileSize: true,
+  mimeType: true,
   createdAt: true,
 } as const;
 
@@ -90,6 +93,9 @@ export const create = async (
     type: KnowledgeItemType;
     url?: string | null;
     description?: string | null;
+    fileKey?: string | null;
+    fileSize?: number | null;
+    mimeType?: string | null;
     createdBy: string;
   },
 ) => {
@@ -101,6 +107,9 @@ export const create = async (
       type: input.type,
       url: input.url ?? null,
       description: input.description ?? null,
+      fileKey: input.fileKey ?? null,
+      fileSize: input.fileSize ?? null,
+      mimeType: input.mimeType ?? null,
       createdBy: input.createdBy,
     })
     .returning({
@@ -109,6 +118,9 @@ export const create = async (
       type: knowledgeItems.type,
       url: knowledgeItems.url,
       description: knowledgeItems.description,
+      fileKey: knowledgeItems.fileKey,
+      fileSize: knowledgeItems.fileSize,
+      mimeType: knowledgeItems.mimeType,
     });
   return result;
 };
@@ -121,6 +133,9 @@ export const update = async (
     description?: string | null;
     url?: string | null;
     type?: KnowledgeItemType;
+    fileKey?: string | null;
+    fileSize?: number | null;
+    mimeType?: string | null;
   },
 ) => {
   const [result] = await db
@@ -130,6 +145,9 @@ export const update = async (
       description: input.description,
       url: input.url,
       type: input.type,
+      fileKey: input.fileKey,
+      fileSize: input.fileSize,
+      mimeType: input.mimeType,
       updatedAt: new Date(),
     })
     .where(
@@ -144,6 +162,9 @@ export const update = async (
       type: knowledgeItems.type,
       url: knowledgeItems.url,
       description: knowledgeItems.description,
+      fileKey: knowledgeItems.fileKey,
+      fileSize: knowledgeItems.fileSize,
+      mimeType: knowledgeItems.mimeType,
     });
   return result;
 };

@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { HiXMark } from "react-icons/hi2";
+import { TbUpload } from "react-icons/tb";
 import { z } from "zod";
 import Button from "~/components/Button";
 import CheckboxDropdown from "~/components/CheckboxDropdown";
@@ -21,10 +22,20 @@ const knowledgeItemTypes = [
   "youtube",
   "linkedin",
   "image",
+  "video",
   "pdf",
   "audio",
   "other",
 ] as const;
+
+const FILE_TYPES = new Set(["image", "video", "pdf", "audio"]);
+
+const ACCEPT_BY_TYPE: Record<string, string> = {
+  image: "image/*",
+  video: "video/*",
+  audio: "audio/*",
+  pdf: "application/pdf",
+};
 
 const schema = z.object({
   title: z
@@ -46,6 +57,9 @@ export function EditKnowledgeItemForm({
   const queryClient = useQueryClient();
   const { closeModal, openModal, modalStates, clearModalState } = useModal();
   const { showPopup } = usePopup();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: item } = useQuery({
     queryKey: apiKeys.knowledgeItem.byId({ publicId }),
@@ -75,6 +89,7 @@ export function EditKnowledgeItemForm({
   });
 
   const selectedType = watch("type");
+  const isFileType = FILE_TYPES.has(selectedType);
 
   const itemLabelPublicIds =
     item?.labels.map((l) => l.knowledgeLabel.publicId) ?? [];
@@ -144,12 +159,44 @@ export function EditKnowledgeItemForm({
     clearModalState("NEW_KNOWLEDGE_LABEL_CREATED");
   }, [modalStates.NEW_KNOWLEDGE_LABEL_CREATED]);
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
+    const isFile = FILE_TYPES.has(data.type);
+
+    if (isFile && selectedFile) {
+      setIsUploading(true);
+      try {
+        const { uploadUrl, fileKey } = await api.upload.presign({
+          fileName: selectedFile.name,
+          mimeType: selectedFile.type,
+          fileSize: selectedFile.size,
+        });
+        await api.upload.toR2(uploadUrl, selectedFile);
+        updateItem.mutate({
+          publicId,
+          title: data.title,
+          type: data.type,
+          description: data.description || null,
+          fileKey,
+          fileSize: selectedFile.size,
+          mimeType: selectedFile.type,
+        });
+      } catch {
+        showPopup({
+          header: "Error",
+          message: "Failed to upload file",
+          icon: "error",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+      return;
+    }
+
     updateItem.mutate({
       publicId,
       title: data.title,
       type: data.type,
-      url: data.url || null,
+      url: isFile ? null : (data.url || null),
       description: data.description || null,
     });
   };
@@ -195,11 +242,40 @@ export function EditKnowledgeItemForm({
               </option>
             ))}
           </select>
-          <Input
-            id="edit-url"
-            placeholder={selectedType === "creator" ? "Profile URL (optional)" : "URL (optional)"}
-            {...register("url")}
-          />
+          {isFileType ? (
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPT_BY_TYPE[selectedType] ?? "*/*"}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setSelectedFile(file);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm ring-1 ring-inset ring-light-600 hover:bg-light-200 dark:ring-dark-700 dark:hover:bg-dark-300"
+              >
+                <TbUpload className="h-4 w-4 text-neutral-500 dark:text-dark-800" />
+                <span className="truncate text-neutral-600 dark:text-dark-900">
+                  {selectedFile
+                    ? selectedFile.name
+                    : item?.fileKey
+                      ? "Replace file..."
+                      : "Choose file..."}
+                </span>
+              </button>
+            </div>
+          ) : (
+            <Input
+              id="edit-url"
+              placeholder={selectedType === "creator" ? "Profile URL (optional)" : "URL (optional)"}
+              {...register("url")}
+            />
+          )}
           <Input
             id="edit-description"
             placeholder="Description (optional)"
@@ -268,8 +344,8 @@ export function EditKnowledgeItemForm({
             Delete
           </Button>
         </div>
-        <Button type="submit" isLoading={updateItem.isPending}>
-          Save
+        <Button type="submit" isLoading={updateItem.isPending || isUploading}>
+          {isUploading ? "Uploading..." : "Save"}
         </Button>
       </div>
     </form>

@@ -14,6 +14,7 @@ import { knowledgeItemRouter } from "./routes/knowledge-items";
 import { labelRouter } from "./routes/labels";
 import { listRouter } from "./routes/lists";
 import { userApiKeyRouter } from "./routes/user-api-keys";
+import { uploadRouter } from "./routes/uploads";
 import { userRouter } from "./routes/users";
 
 export type Env = {
@@ -46,6 +47,7 @@ const appRouter = app
 	.route("/", knowledgeItemRouter)
 	.route("/", labelRouter)
 	.route("/", listRouter)
+	.route("/", uploadRouter)
 	.route("/", userApiKeyRouter)
 	.route("/", userRouter);
 
