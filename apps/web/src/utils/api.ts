@@ -79,13 +79,13 @@ interface ApiCardDetail {
   };
 }
 
-interface ApiKnowledgeLabel {
+interface ApiResourceLabel {
   publicId: string;
   name: string;
   colourCode: string | null;
 }
 
-interface ApiKnowledgeItem {
+interface ApiResourceItem {
   publicId: string;
   title: string;
   description: string | null;
@@ -96,7 +96,7 @@ interface ApiKnowledgeItem {
   mimeType: string | null;
   fileUrl: string | null;
   createdAt: string;
-  labels: { knowledgeLabel: ApiKnowledgeLabel }[];
+  labels: { resourceLabel: ApiResourceLabel }[];
 }
 
 interface ApiUser {
@@ -146,15 +146,15 @@ export const apiKeys = {
     byPublicId: (input: { labelPublicId: string }) =>
       ["label", "byPublicId", input] as const,
   },
-  knowledgeItem: {
-    all: () => ["knowledgeItem", "all"] as const,
+  resourceItem: {
+    all: () => ["resourceItem", "all"] as const,
     search: (input: { types?: string[]; labels?: string[] }) =>
-      ["knowledgeItem", "search", input] as const,
+      ["resourceItem", "search", input] as const,
     byId: (input: { publicId: string }) =>
-      ["knowledgeItem", "byId", input] as const,
+      ["resourceItem", "byId", input] as const,
   },
-  knowledgeLabel: {
-    all: () => ["knowledgeLabel", "all"] as const,
+  resourceLabel: {
+    all: () => ["resourceLabel", "all"] as const,
   },
   user: {
     getUser: () => ["user", "getUser"] as const,
@@ -433,42 +433,42 @@ export const api = {
       del<{ success: boolean }>(`/labels/${input.labelPublicId}`),
   },
 
-  knowledgeItem: {
-    all: () => get<ApiKnowledgeItem[]>("/knowledge-items"),
+  resourceItem: {
+    all: () => get<ApiResourceItem[]>("/resources"),
 
     search: (input: { types?: string[]; labels?: string[] }) => {
       const params = new URLSearchParams();
       if (input.types?.length) params.set("type", input.types.join(","));
       if (input.labels?.length) params.set("label", input.labels.join(","));
-      return get<ApiKnowledgeItem[]>(
-        `/knowledge-items/search?${params.toString()}`,
+      return get<ApiResourceItem[]>(
+        `/resources/search?${params.toString()}`,
       );
     },
 
     byId: (input: { publicId: string }) =>
-      get<ApiKnowledgeItem>(`/knowledge-items/${input.publicId}`),
+      get<ApiResourceItem>(`/resources/${input.publicId}`),
 
     create: (input: {
       title: string;
-      type: ApiKnowledgeItem["type"];
+      type: ApiResourceItem["type"];
       url?: string | null;
       description?: string | null;
       fileKey?: string | null;
       fileSize?: number | null;
       mimeType?: string | null;
-    }) => post<ApiKnowledgeItem>("/knowledge-items", input),
+    }) => post<ApiResourceItem>("/resources", input),
 
     update: (input: {
       publicId: string;
       title?: string;
-      type?: ApiKnowledgeItem["type"];
+      type?: ApiResourceItem["type"];
       url?: string | null;
       description?: string | null;
       fileKey?: string | null;
       fileSize?: number | null;
       mimeType?: string | null;
     }) =>
-      put<ApiKnowledgeItem>(`/knowledge-items/${input.publicId}`, {
+      put<ApiResourceItem>(`/resources/${input.publicId}`, {
         title: input.title,
         type: input.type,
         url: input.url,
@@ -479,34 +479,34 @@ export const api = {
       }),
 
     delete: (input: { publicId: string }) =>
-      del<{ success: boolean }>(`/knowledge-items/${input.publicId}`),
+      del<{ success: boolean }>(`/resources/${input.publicId}`),
 
     toggleLabel: (input: { publicId: string; labelPublicId: string }) =>
       put<{ added: boolean }>(
-        `/knowledge-items/${input.publicId}/labels/${input.labelPublicId}`,
+        `/resources/${input.publicId}/labels/${input.labelPublicId}`,
         {},
       ),
   },
 
-  knowledgeLabel: {
-    all: () => get<ApiKnowledgeLabel[]>("/knowledge-items/labels/all"),
+  resourceLabel: {
+    all: () => get<ApiResourceLabel[]>("/resources/labels/all"),
 
     create: (input: { name: string; colourCode: string }) =>
-      post<ApiKnowledgeLabel>("/knowledge-items/labels", input),
+      post<ApiResourceLabel>("/resources/labels", input),
 
     update: (input: {
       labelPublicId: string;
       name: string;
       colourCode: string;
     }) =>
-      put<ApiKnowledgeLabel>(
-        `/knowledge-items/labels/${input.labelPublicId}`,
+      put<ApiResourceLabel>(
+        `/resources/labels/${input.labelPublicId}`,
         { name: input.name, colourCode: input.colourCode },
       ),
 
     delete: (input: { labelPublicId: string }) =>
       del<{ success: boolean }>(
-        `/knowledge-items/labels/${input.labelPublicId}`,
+        `/resources/labels/${input.labelPublicId}`,
       ),
   },
 

@@ -3,7 +3,7 @@ import { boolean, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core"
 
 import { boards } from "./boards";
 import { cards } from "./cards";
-import { knowledgeItems, knowledgeLabels } from "./knowledge-items";
+import { resourceItems, resourceLabels } from "./resource-items";
 import { lists } from "./lists";
 import { userApiKeys } from "./user-api-keys";
 
@@ -37,16 +37,16 @@ export const usersRelations = relations(users, ({ many }) => ({
   lists: many(lists, {
     relationName: "listsCreatedByUser",
   }),
-  knowledgeItems: many(knowledgeItems, {
-    relationName: "knowledgeItemsCreatedByUser",
+  resourceItems: many(resourceItems, {
+    relationName: "resourceItemsCreatedByUser",
   }),
-  deletedKnowledgeItems: many(knowledgeItems, {
-    relationName: "knowledgeItemsDeletedByUser",
+  deletedResourceItems: many(resourceItems, {
+    relationName: "resourceItemsDeletedByUser",
   }),
-  knowledgeLabels: many(knowledgeLabels, {
-    relationName: "knowledgeLabelsCreatedByUser",
+  resourceLabels: many(resourceLabels, {
+    relationName: "resourceLabelsCreatedByUser",
   }),
-  deletedKnowledgeLabels: many(knowledgeLabels, {
-    relationName: "knowledgeLabelsDeletedByUser",
+  deletedResourceLabels: many(resourceLabels, {
+    relationName: "resourceLabelsDeletedByUser",
   }),
 }));

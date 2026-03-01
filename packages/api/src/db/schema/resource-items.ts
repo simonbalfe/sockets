@@ -14,7 +14,7 @@ import {
 
 import { users } from "./users";
 
-export const knowledgeItemTypes = [
+export const resourceItemTypes = [
   "link",
   "creator",
   "tweet",
@@ -28,18 +28,18 @@ export const knowledgeItemTypes = [
   "audio",
   "other",
 ] as const;
-export type KnowledgeItemType = (typeof knowledgeItemTypes)[number];
-export const knowledgeItemTypeEnum = pgEnum(
+export type ResourceItemType = (typeof resourceItemTypes)[number];
+export const resourceItemTypeEnum = pgEnum(
   "knowledge_item_type",
-  knowledgeItemTypes,
+  resourceItemTypes,
 );
 
-export const knowledgeItems = pgTable("knowledge_item", {
+export const resourceItems = pgTable("knowledge_item", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   publicId: varchar("publicId", { length: 12 }).notNull().unique(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  type: knowledgeItemTypeEnum("type").notNull().default("link"),
+  type: resourceItemTypeEnum("type").notNull().default("link"),
   url: text("url"),
   fileKey: text("fileKey"),
   fileSize: integer("fileSize"),
@@ -55,24 +55,24 @@ export const knowledgeItems = pgTable("knowledge_item", {
   }),
 }).enableRLS();
 
-export const knowledgeItemsRelations = relations(
-  knowledgeItems,
+export const resourceItemsRelations = relations(
+  resourceItems,
   ({ one, many }) => ({
     createdBy: one(users, {
-      fields: [knowledgeItems.createdBy],
+      fields: [resourceItems.createdBy],
       references: [users.id],
-      relationName: "knowledgeItemsCreatedByUser",
+      relationName: "resourceItemsCreatedByUser",
     }),
     deletedBy: one(users, {
-      fields: [knowledgeItems.deletedBy],
+      fields: [resourceItems.deletedBy],
       references: [users.id],
-      relationName: "knowledgeItemsDeletedByUser",
+      relationName: "resourceItemsDeletedByUser",
     }),
-    labels: many(knowledgeItemsToLabels),
+    labels: many(resourceItemsToLabels),
   }),
 );
 
-export const knowledgeLabels = pgTable("knowledge_label", {
+export const resourceLabels = pgTable("knowledge_label", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   publicId: varchar("publicId", { length: 12 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -88,46 +88,46 @@ export const knowledgeLabels = pgTable("knowledge_label", {
   }),
 }).enableRLS();
 
-export const knowledgeLabelsRelations = relations(
-  knowledgeLabels,
+export const resourceLabelsRelations = relations(
+  resourceLabels,
   ({ one, many }) => ({
     createdBy: one(users, {
-      fields: [knowledgeLabels.createdBy],
+      fields: [resourceLabels.createdBy],
       references: [users.id],
-      relationName: "knowledgeLabelsCreatedByUser",
+      relationName: "resourceLabelsCreatedByUser",
     }),
     deletedBy: one(users, {
-      fields: [knowledgeLabels.deletedBy],
+      fields: [resourceLabels.deletedBy],
       references: [users.id],
-      relationName: "knowledgeLabelsDeletedByUser",
+      relationName: "resourceLabelsDeletedByUser",
     }),
-    items: many(knowledgeItemsToLabels),
+    items: many(resourceItemsToLabels),
   }),
 );
 
-export const knowledgeItemsToLabels = pgTable(
+export const resourceItemsToLabels = pgTable(
   "_knowledge_item_labels",
   {
     knowledgeItemId: bigint("knowledgeItemId", { mode: "number" })
       .notNull()
-      .references(() => knowledgeItems.id, { onDelete: "cascade" }),
+      .references(() => resourceItems.id, { onDelete: "cascade" }),
     knowledgeLabelId: bigint("knowledgeLabelId", { mode: "number" })
       .notNull()
-      .references(() => knowledgeLabels.id, { onDelete: "cascade" }),
+      .references(() => resourceLabels.id, { onDelete: "cascade" }),
   },
   (t) => [primaryKey({ columns: [t.knowledgeItemId, t.knowledgeLabelId] })],
 ).enableRLS();
 
-export const knowledgeItemsToLabelsRelations = relations(
-  knowledgeItemsToLabels,
+export const resourceItemsToLabelsRelations = relations(
+  resourceItemsToLabels,
   ({ one }) => ({
-    knowledgeItem: one(knowledgeItems, {
-      fields: [knowledgeItemsToLabels.knowledgeItemId],
-      references: [knowledgeItems.id],
+    resourceItem: one(resourceItems, {
+      fields: [resourceItemsToLabels.knowledgeItemId],
+      references: [resourceItems.id],
     }),
-    knowledgeLabel: one(knowledgeLabels, {
-      fields: [knowledgeItemsToLabels.knowledgeLabelId],
-      references: [knowledgeLabels.id],
+    resourceLabel: one(resourceLabels, {
+      fields: [resourceItemsToLabels.knowledgeLabelId],
+      references: [resourceLabels.id],
     }),
   }),
 );

@@ -1,5 +1,5 @@
 {
-  "name": "kan-monorepo",
+  "name": "sockets-monorepo",
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@9.15.4",
@@ -11,9 +11,9 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "deploy:cf": "turbo deploy",
-    "tail": "pnpm --filter @kan/web exec wrangler tail",
+    "tail": "pnpm --filter @sockets/web exec wrangler tail",
     "knip": "knip",
-    "db:push": "pnpm --filter @kan/api db:push"
+    "db:push": "pnpm --filter @sockets/api db:push"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.3",
@@ -21,7 +21,7 @@
     "turbo": "^2.4.4"
   },
   "dependencies": {
-    "@kan/api": "workspace:*",
+    "@sockets/api": "workspace:*",
     "@neondatabase/serverless": "^1.0.0",
     "drizzle-orm": "^0.42.0"
   },

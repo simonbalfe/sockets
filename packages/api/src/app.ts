@@ -10,7 +10,7 @@ import { boardRouter } from "./routes/boards";
 import { cardRouter } from "./routes/cards";
 import { checklistRouter } from "./routes/checklists";
 import { healthRouter } from "./routes/health";
-import { knowledgeItemRouter } from "./routes/knowledge-items";
+import { resourceItemRouter } from "./routes/resource-items";
 import { labelRouter } from "./routes/labels";
 import { listRouter } from "./routes/lists";
 import { userApiKeyRouter } from "./routes/user-api-keys";
@@ -44,7 +44,7 @@ const appRouter = app
 	.route("/", boardRouter)
 	.route("/", cardRouter)
 	.route("/", checklistRouter)
-	.route("/", knowledgeItemRouter)
+	.route("/", resourceItemRouter)
 	.route("/", labelRouter)
 	.route("/", listRouter)
 	.route("/", uploadRouter)
@@ -64,7 +64,7 @@ app.get("/app-openapi", async (c) => {
 	const handler = openAPIRouteHandler(app, {
 		documentation: {
 			info: {
-				title: "Kan API",
+				title: "Sockets API",
 				version: "1.0.0",
 			},
 			servers: [

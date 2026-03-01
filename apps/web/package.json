@@ -1,5 +1,5 @@
 {
-  "name": "@kan/web",
+  "name": "@sockets/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,7 +16,7 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@kan/api": "workspace:*",
+    "@sockets/api": "workspace:*",
     "@fontsource-variable/plus-jakarta-sans": "^5.1.1",
     "better-auth": "^1.2.7",
     "@headlessui/react": "^2.2.0",

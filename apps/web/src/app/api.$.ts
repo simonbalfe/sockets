@@ -1,4 +1,4 @@
-import { app } from "@kan/api";
+import { app } from "@sockets/api";
 import { createFileRoute } from "@tanstack/react-router";
 
 const handle = async ({ request }: { request: Request }) => {

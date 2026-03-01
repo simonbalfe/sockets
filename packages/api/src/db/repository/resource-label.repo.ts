@@ -1,10 +1,10 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { generateUID } from "../../lib/utils";
 import type { dbClient } from "../client";
-import { knowledgeLabels } from "../schema";
+import { resourceLabels } from "../schema";
 
 export const getAllByUserId = async (db: dbClient, userId: string) => {
-  return db.query.knowledgeLabels.findMany({
+  return db.query.resourceLabels.findMany({
     columns: {
       id: true,
       publicId: true,
@@ -12,8 +12,8 @@ export const getAllByUserId = async (db: dbClient, userId: string) => {
       colourCode: true,
     },
     where: and(
-      eq(knowledgeLabels.createdBy, userId),
-      isNull(knowledgeLabels.deletedAt),
+      eq(resourceLabels.createdBy, userId),
+      isNull(resourceLabels.deletedAt),
     ),
   });
 };
@@ -27,7 +27,7 @@ export const create = async (
   },
 ) => {
   const [result] = await db
-    .insert(knowledgeLabels)
+    .insert(resourceLabels)
     .values({
       publicId: generateUID(),
       name: input.name,
@@ -35,9 +35,9 @@ export const create = async (
       createdBy: input.createdBy,
     })
     .returning({
-      publicId: knowledgeLabels.publicId,
-      name: knowledgeLabels.name,
-      colourCode: knowledgeLabels.colourCode,
+      publicId: resourceLabels.publicId,
+      name: resourceLabels.name,
+      colourCode: resourceLabels.colourCode,
     });
 
   return result;
@@ -52,7 +52,7 @@ export const update = async (
   },
 ) => {
   const [result] = await db
-    .update(knowledgeLabels)
+    .update(resourceLabels)
     .set({
       name: input.name,
       colourCode: input.colourCode,
@@ -60,14 +60,14 @@ export const update = async (
     })
     .where(
       and(
-        eq(knowledgeLabels.publicId, input.publicId),
-        isNull(knowledgeLabels.deletedAt),
+        eq(resourceLabels.publicId, input.publicId),
+        isNull(resourceLabels.deletedAt),
       ),
     )
     .returning({
-      publicId: knowledgeLabels.publicId,
-      name: knowledgeLabels.name,
-      colourCode: knowledgeLabels.colourCode,
+      publicId: resourceLabels.publicId,
+      name: resourceLabels.name,
+      colourCode: resourceLabels.colourCode,
     });
 
   return result;
@@ -81,30 +81,30 @@ export const softDelete = async (
   },
 ) => {
   const [result] = await db
-    .update(knowledgeLabels)
+    .update(resourceLabels)
     .set({
       deletedAt: new Date(),
       deletedBy: args.deletedBy,
     })
     .where(
       and(
-        eq(knowledgeLabels.publicId, args.publicId),
-        isNull(knowledgeLabels.deletedAt),
+        eq(resourceLabels.publicId, args.publicId),
+        isNull(resourceLabels.deletedAt),
       ),
     )
     .returning({
-      publicId: knowledgeLabels.publicId,
+      publicId: resourceLabels.publicId,
     });
 
   return result;
 };
 
 export const getIdByPublicId = async (db: dbClient, publicId: string) => {
-  const result = await db.query.knowledgeLabels.findFirst({
+  const result = await db.query.resourceLabels.findFirst({
     columns: { id: true },
     where: and(
-      eq(knowledgeLabels.publicId, publicId),
-      isNull(knowledgeLabels.deletedAt),
+      eq(resourceLabels.publicId, publicId),
+      isNull(resourceLabels.deletedAt),
     ),
   });
 

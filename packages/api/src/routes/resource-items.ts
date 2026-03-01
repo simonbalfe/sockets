@@ -4,12 +4,12 @@ import { describeRoute, validator } from "hono-openapi";
 import { z } from "zod";
 
 import type { Env } from "../app";
-import * as knowledgeItemRepo from "../db/repository/knowledge-item.repo";
-import * as knowledgeLabelRepo from "../db/repository/knowledge-label.repo";
-import { type KnowledgeItemType, knowledgeItemTypes } from "../db/schema";
+import * as resourceItemRepo from "../db/repository/resource-item.repo";
+import * as resourceLabelRepo from "../db/repository/resource-label.repo";
+import { type ResourceItemType, resourceItemTypes } from "../db/schema";
 import { deleteObject, generateDownloadUrl } from "../lib/r2";
 
-const knowledgeItemTypeSchema = z.enum(knowledgeItemTypes);
+const resourceItemTypeSchema = z.enum(resourceItemTypes);
 
 const csvToArray = z
 	.union([z.string(), z.array(z.string())])
@@ -21,19 +21,19 @@ const searchQuerySchema = z.object({
 	label: csvToArray,
 });
 
-const createKnowledgeLabelSchema = z.object({
+const createResourceLabelSchema = z.object({
 	name: z.string().min(1).max(255),
 	colourCode: z.string().min(1).max(12),
 });
 
-const updateKnowledgeLabelSchema = z.object({
+const updateResourceLabelSchema = z.object({
 	name: z.string().min(1).max(255),
 	colourCode: z.string().min(1).max(12),
 });
 
-const createKnowledgeItemSchema = z.object({
+const createResourceItemSchema = z.object({
 	title: z.string().min(1).max(255),
-	type: knowledgeItemTypeSchema,
+	type: resourceItemTypeSchema,
 	url: z.string().nullable().optional(),
 	description: z.string().nullable().optional(),
 	fileKey: z.string().nullable().optional(),
@@ -41,10 +41,10 @@ const createKnowledgeItemSchema = z.object({
 	mimeType: z.string().max(255).nullable().optional(),
 });
 
-const updateKnowledgeItemSchema = z
+const updateResourceItemSchema = z
 	.object({
 		title: z.string().min(1).max(255).optional(),
-		type: knowledgeItemTypeSchema.optional(),
+		type: resourceItemTypeSchema.optional(),
 		url: z.string().nullable().optional(),
 		description: z.string().nullable().optional(),
 		fileKey: z.string().nullable().optional(),
@@ -77,20 +77,20 @@ async function attachFileUrl<
 	};
 }
 
-export const knowledgeItemRouter = new Hono<Env>()
-	.basePath("/knowledge-items")
+export const resourceItemRouter = new Hono<Env>()
+	.basePath("/resources")
 	.get(
 		"/",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "List knowledge items",
-			description: "List all knowledge items for the authenticated user",
-			responses: { 200: { description: "List of knowledge items" } },
+			tags: ["Resources"],
+			summary: "List resources",
+			description: "List all resources for the authenticated user",
+			responses: { 200: { description: "List of resources" } },
 		}),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
-			const items = await knowledgeItemRepo.getAllByUserId(db, userId);
+			const items = await resourceItemRepo.getAllByUserId(db, userId);
 			return c.json(await attachFileUrls(items));
 		},
 	)
@@ -98,36 +98,36 @@ export const knowledgeItemRouter = new Hono<Env>()
 	.get(
 		"/labels/all",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "List knowledge labels",
-			description: "List all knowledge labels for the authenticated user",
-			responses: { 200: { description: "List of knowledge labels" } },
+			tags: ["Resources"],
+			summary: "List resource labels",
+			description: "List all resource labels for the authenticated user",
+			responses: { 200: { description: "List of resource labels" } },
 		}),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
-			return c.json(await knowledgeLabelRepo.getAllByUserId(db, userId));
+			return c.json(await resourceLabelRepo.getAllByUserId(db, userId));
 		},
 	)
 
 	.post(
 		"/labels",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "Create knowledge label",
-			description: "Create a new label for knowledge items",
+			tags: ["Resources"],
+			summary: "Create resource label",
+			description: "Create a new label for resources",
 			responses: {
 				200: { description: "Created label" },
 				500: { description: "Failed to create label" },
 			},
 		}),
-		validator("json", createKnowledgeLabelSchema),
+		validator("json", createResourceLabelSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
 			const body = c.req.valid("json");
 
-			const result = await knowledgeLabelRepo.create(db, {
+			const result = await resourceLabelRepo.create(db, {
 				name: body.name,
 				colourCode: body.colourCode,
 				createdBy: userId,
@@ -144,21 +144,21 @@ export const knowledgeItemRouter = new Hono<Env>()
 	.put(
 		"/labels/:labelPublicId",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "Update knowledge label",
-			description: "Update a knowledge label name and colour",
+			tags: ["Resources"],
+			summary: "Update resource label",
+			description: "Update a resource label name and colour",
 			responses: {
 				200: { description: "Updated label" },
 				404: { description: "Label not found" },
 			},
 		}),
-		validator("json", updateKnowledgeLabelSchema),
+		validator("json", updateResourceLabelSchema),
 		async (c) => {
 			const db = c.var.db;
 			const labelPublicId = c.req.param("labelPublicId");
 			const body = c.req.valid("json");
 
-			const result = await knowledgeLabelRepo.update(db, {
+			const result = await resourceLabelRepo.update(db, {
 				publicId: labelPublicId,
 				name: body.name,
 				colourCode: body.colourCode,
@@ -175,9 +175,9 @@ export const knowledgeItemRouter = new Hono<Env>()
 	.delete(
 		"/labels/:labelPublicId",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "Delete knowledge label",
-			description: "Soft delete a knowledge label",
+			tags: ["Resources"],
+			summary: "Delete resource label",
+			description: "Soft delete a resource label",
 			responses: {
 				200: { description: "Label deleted" },
 				404: { description: "Label not found" },
@@ -188,7 +188,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 			const userId = c.get("userId");
 			const labelPublicId = c.req.param("labelPublicId");
 
-			const result = await knowledgeLabelRepo.softDelete(db, {
+			const result = await resourceLabelRepo.softDelete(db, {
 				publicId: labelPublicId,
 				deletedBy: userId,
 			});
@@ -204,10 +204,10 @@ export const knowledgeItemRouter = new Hono<Env>()
 	.get(
 		"/search",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "Search knowledge items",
-			description: "Filter knowledge items by type and labels",
-			responses: { 200: { description: "Filtered knowledge items" } },
+			tags: ["Resources"],
+			summary: "Search resources",
+			description: "Filter resources by type and labels",
+			responses: { 200: { description: "Filtered resources" } },
 		}),
 		validator("query", searchQuerySchema),
 		async (c) => {
@@ -215,11 +215,11 @@ export const knowledgeItemRouter = new Hono<Env>()
 			const userId = c.get("userId");
 			const { type, label } = c.req.valid("query");
 
-			const validTypes = type?.filter((t): t is KnowledgeItemType =>
-				(knowledgeItemTypes as readonly string[]).includes(t),
+			const validTypes = type?.filter((t): t is ResourceItemType =>
+				(resourceItemTypes as readonly string[]).includes(t),
 			);
 
-			const items = await knowledgeItemRepo.getFiltered(db, userId, {
+			const items = await resourceItemRepo.getFiltered(db, userId, {
 				types: validTypes?.length ? validTypes : undefined,
 				labelPublicIds: label,
 			});
@@ -230,21 +230,21 @@ export const knowledgeItemRouter = new Hono<Env>()
 	.get(
 		"/:publicId",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "Get knowledge item",
-			description: "Get a knowledge item by its public ID",
+			tags: ["Resources"],
+			summary: "Get resource",
+			description: "Get a resource by its public ID",
 			responses: {
-				200: { description: "Knowledge item details" },
-				404: { description: "Knowledge item not found" },
+				200: { description: "Resource details" },
+				404: { description: "Resource not found" },
 			},
 		}),
 		async (c) => {
 			const db = c.var.db;
 			const publicId = c.req.param("publicId");
 
-			const item = await knowledgeItemRepo.getByPublicId(db, publicId);
+			const item = await resourceItemRepo.getByPublicId(db, publicId);
 			if (!item) {
-				return c.json({ error: "Knowledge item not found" }, 404);
+				return c.json({ error: "Resource not found" }, 404);
 			}
 
 			return c.json(await attachFileUrl(item));
@@ -254,21 +254,21 @@ export const knowledgeItemRouter = new Hono<Env>()
 	.post(
 		"/",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "Create knowledge item",
-			description: "Create a new knowledge item",
+			tags: ["Resources"],
+			summary: "Create resource",
+			description: "Create a new resource",
 			responses: {
-				200: { description: "Created knowledge item" },
-				500: { description: "Failed to create knowledge item" },
+				200: { description: "Created resource" },
+				500: { description: "Failed to create resource" },
 			},
 		}),
-		validator("json", createKnowledgeItemSchema),
+		validator("json", createResourceItemSchema),
 		async (c) => {
 			const db = c.var.db;
 			const userId = c.get("userId");
 			const body = c.req.valid("json");
 
-			const result = await knowledgeItemRepo.create(db, {
+			const result = await resourceItemRepo.create(db, {
 				title: body.title,
 				type: body.type,
 				url: FILE_TYPES.has(body.type) ? null : body.url,
@@ -280,7 +280,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 			});
 
 			if (!result) {
-				return c.json({ error: "Failed to create knowledge item" }, 500);
+				return c.json({ error: "Failed to create resource" }, 500);
 			}
 
 			return c.json(await attachFileUrl(result));
@@ -290,24 +290,24 @@ export const knowledgeItemRouter = new Hono<Env>()
 	.put(
 		"/:publicId",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "Update knowledge item",
-			description: "Update a knowledge item's fields",
+			tags: ["Resources"],
+			summary: "Update resource",
+			description: "Update a resource's fields",
 			responses: {
-				200: { description: "Updated knowledge item" },
-				404: { description: "Knowledge item not found" },
-				500: { description: "Failed to update knowledge item" },
+				200: { description: "Updated resource" },
+				404: { description: "Resource not found" },
+				500: { description: "Failed to update resource" },
 			},
 		}),
-		validator("json", updateKnowledgeItemSchema),
+		validator("json", updateResourceItemSchema),
 		async (c) => {
 			const db = c.var.db;
 			const publicId = c.req.param("publicId");
 			const body = c.req.valid("json");
 
-			const existing = await knowledgeItemRepo.getByPublicId(db, publicId);
+			const existing = await resourceItemRepo.getByPublicId(db, publicId);
 			if (!existing) {
-				return c.json({ error: "Knowledge item not found" }, 404);
+				return c.json({ error: "Resource not found" }, 404);
 			}
 
 			const effectiveType = body.type ?? existing.type;
@@ -317,7 +317,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 				await deleteObject(existing.fileKey).catch(() => {});
 			}
 
-			const result = await knowledgeItemRepo.update(db, {
+			const result = await resourceItemRepo.update(db, {
 				publicId,
 				title: body.title,
 				description: body.description,
@@ -329,7 +329,7 @@ export const knowledgeItemRouter = new Hono<Env>()
 			});
 
 			if (!result) {
-				return c.json({ error: "Failed to update knowledge item" }, 500);
+				return c.json({ error: "Failed to update resource" }, 500);
 			}
 
 			return c.json(await attachFileUrl(result));
@@ -339,12 +339,12 @@ export const knowledgeItemRouter = new Hono<Env>()
 	.delete(
 		"/:publicId",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "Delete knowledge item",
-			description: "Soft delete a knowledge item",
+			tags: ["Resources"],
+			summary: "Delete resource",
+			description: "Soft delete a resource",
 			responses: {
-				200: { description: "Knowledge item deleted" },
-				404: { description: "Knowledge item not found" },
+				200: { description: "Resource deleted" },
+				404: { description: "Resource not found" },
 			},
 		}),
 		async (c) => {
@@ -352,16 +352,16 @@ export const knowledgeItemRouter = new Hono<Env>()
 			const userId = c.get("userId");
 			const publicId = c.req.param("publicId");
 
-			const existing = await knowledgeItemRepo.getByPublicId(db, publicId);
+			const existing = await resourceItemRepo.getByPublicId(db, publicId);
 			if (!existing) {
-				return c.json({ error: "Knowledge item not found" }, 404);
+				return c.json({ error: "Resource not found" }, 404);
 			}
 
 			if (existing.fileKey) {
 				await deleteObject(existing.fileKey).catch(() => {});
 			}
 
-			await knowledgeItemRepo.softDelete(db, {
+			await resourceItemRepo.softDelete(db, {
 				publicId,
 				deletedBy: userId,
 			});
@@ -373,12 +373,12 @@ export const knowledgeItemRouter = new Hono<Env>()
 	.put(
 		"/:publicId/labels/:labelPublicId",
 		describeRoute({
-			tags: ["Knowledge"],
-			summary: "Toggle knowledge item label",
-			description: "Add or remove a label from a knowledge item",
+			tags: ["Resources"],
+			summary: "Toggle resource label",
+			description: "Add or remove a label from a resource",
 			responses: {
 				200: { description: "Label toggled" },
-				404: { description: "Knowledge item or label not found" },
+				404: { description: "Resource or label not found" },
 			},
 		}),
 		async (c) => {
@@ -386,17 +386,17 @@ export const knowledgeItemRouter = new Hono<Env>()
 			const publicId = c.req.param("publicId");
 			const labelPublicId = c.req.param("labelPublicId");
 
-			const item = await knowledgeItemRepo.getIdByPublicId(db, publicId);
+			const item = await resourceItemRepo.getIdByPublicId(db, publicId);
 			if (!item) {
-				return c.json({ error: "Knowledge item not found" }, 404);
+				return c.json({ error: "Resource not found" }, 404);
 			}
 
-			const label = await knowledgeLabelRepo.getIdByPublicId(db, labelPublicId);
+			const label = await resourceLabelRepo.getIdByPublicId(db, labelPublicId);
 			if (!label) {
 				return c.json({ error: "Label not found" }, 404);
 			}
 
-			const result = await knowledgeItemRepo.toggleLabel(db, {
+			const result = await resourceItemRepo.toggleLabel(db, {
 				knowledgeItemId: item.id,
 				knowledgeLabelId: label.id,
 			});

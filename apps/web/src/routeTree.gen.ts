@@ -13,9 +13,11 @@ import { Route as LoginRouteImport } from './app/login'
 import { Route as IndexRouteImport } from './app/index'
 import { Route as TemplatesIndexRouteImport } from './app/templates.index'
 import { Route as SettingsIndexRouteImport } from './app/settings.index'
+import { Route as ResourcesIndexRouteImport } from './app/resources.index'
 import { Route as KnowledgeIndexRouteImport } from './app/knowledge.index'
 import { Route as BoardsIndexRouteImport } from './app/boards.index'
 import { Route as SettingsAccountRouteImport } from './app/settings.account'
+import { Route as ResourcesPublicIdRouteImport } from './app/resources.$publicId'
 import { Route as KnowledgePublicIdRouteImport } from './app/knowledge.$publicId'
 import { Route as CardsCardIdRouteImport } from './app/cards.$cardId'
 import { Route as BoardsBoardIdRouteImport } from './app/boards.$boardId'
@@ -43,6 +45,11 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResourcesIndexRoute = ResourcesIndexRouteImport.update({
+  id: '/resources/',
+  path: '/resources/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KnowledgeIndexRoute = KnowledgeIndexRouteImport.update({
   id: '/knowledge/',
   path: '/knowledge/',
@@ -56,6 +63,11 @@ const BoardsIndexRoute = BoardsIndexRouteImport.update({
 const SettingsAccountRoute = SettingsAccountRouteImport.update({
   id: '/settings/account',
   path: '/settings/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesPublicIdRoute = ResourcesPublicIdRouteImport.update({
+  id: '/resources/$publicId',
+  path: '/resources/$publicId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KnowledgePublicIdRoute = KnowledgePublicIdRouteImport.update({
@@ -97,9 +109,11 @@ export interface FileRoutesByFullPath {
   '/boards/$boardId': typeof BoardsBoardIdRoute
   '/cards/$cardId': typeof CardsCardIdRoute
   '/knowledge/$publicId': typeof KnowledgePublicIdRoute
+  '/resources/$publicId': typeof ResourcesPublicIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/boards/': typeof BoardsIndexRoute
   '/knowledge/': typeof KnowledgeIndexRoute
+  '/resources/': typeof ResourcesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/templates/': typeof TemplatesIndexRoute
   '/templates/$boardId/': typeof TemplatesBoardIdIndexRoute
@@ -112,9 +126,11 @@ export interface FileRoutesByTo {
   '/boards/$boardId': typeof BoardsBoardIdRoute
   '/cards/$cardId': typeof CardsCardIdRoute
   '/knowledge/$publicId': typeof KnowledgePublicIdRoute
+  '/resources/$publicId': typeof ResourcesPublicIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/boards': typeof BoardsIndexRoute
   '/knowledge': typeof KnowledgeIndexRoute
+  '/resources': typeof ResourcesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/templates': typeof TemplatesIndexRoute
   '/templates/$boardId': typeof TemplatesBoardIdIndexRoute
@@ -128,9 +144,11 @@ export interface FileRoutesById {
   '/boards/$boardId': typeof BoardsBoardIdRoute
   '/cards/$cardId': typeof CardsCardIdRoute
   '/knowledge/$publicId': typeof KnowledgePublicIdRoute
+  '/resources/$publicId': typeof ResourcesPublicIdRoute
   '/settings/account': typeof SettingsAccountRoute
   '/boards/': typeof BoardsIndexRoute
   '/knowledge/': typeof KnowledgeIndexRoute
+  '/resources/': typeof ResourcesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/templates/': typeof TemplatesIndexRoute
   '/templates/$boardId/': typeof TemplatesBoardIdIndexRoute
@@ -145,9 +163,11 @@ export interface FileRouteTypes {
     | '/boards/$boardId'
     | '/cards/$cardId'
     | '/knowledge/$publicId'
+    | '/resources/$publicId'
     | '/settings/account'
     | '/boards/'
     | '/knowledge/'
+    | '/resources/'
     | '/settings/'
     | '/templates/'
     | '/templates/$boardId/'
@@ -160,9 +180,11 @@ export interface FileRouteTypes {
     | '/boards/$boardId'
     | '/cards/$cardId'
     | '/knowledge/$publicId'
+    | '/resources/$publicId'
     | '/settings/account'
     | '/boards'
     | '/knowledge'
+    | '/resources'
     | '/settings'
     | '/templates'
     | '/templates/$boardId'
@@ -175,9 +197,11 @@ export interface FileRouteTypes {
     | '/boards/$boardId'
     | '/cards/$cardId'
     | '/knowledge/$publicId'
+    | '/resources/$publicId'
     | '/settings/account'
     | '/boards/'
     | '/knowledge/'
+    | '/resources/'
     | '/settings/'
     | '/templates/'
     | '/templates/$boardId/'
@@ -191,9 +215,11 @@ export interface RootRouteChildren {
   BoardsBoardIdRoute: typeof BoardsBoardIdRoute
   CardsCardIdRoute: typeof CardsCardIdRoute
   KnowledgePublicIdRoute: typeof KnowledgePublicIdRoute
+  ResourcesPublicIdRoute: typeof ResourcesPublicIdRoute
   SettingsAccountRoute: typeof SettingsAccountRoute
   BoardsIndexRoute: typeof BoardsIndexRoute
   KnowledgeIndexRoute: typeof KnowledgeIndexRoute
+  ResourcesIndexRoute: typeof ResourcesIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
   TemplatesIndexRoute: typeof TemplatesIndexRoute
   TemplatesBoardIdIndexRoute: typeof TemplatesBoardIdIndexRoute
@@ -230,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/resources/': {
+      id: '/resources/'
+      path: '/resources'
+      fullPath: '/resources/'
+      preLoaderRoute: typeof ResourcesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/knowledge/': {
       id: '/knowledge/'
       path: '/knowledge'
@@ -249,6 +282,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/account'
       fullPath: '/settings/account'
       preLoaderRoute: typeof SettingsAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources/$publicId': {
+      id: '/resources/$publicId'
+      path: '/resources/$publicId'
+      fullPath: '/resources/$publicId'
+      preLoaderRoute: typeof ResourcesPublicIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/knowledge/$publicId': {
@@ -303,9 +343,11 @@ const rootRouteChildren: RootRouteChildren = {
   BoardsBoardIdRoute: BoardsBoardIdRoute,
   CardsCardIdRoute: CardsCardIdRoute,
   KnowledgePublicIdRoute: KnowledgePublicIdRoute,
+  ResourcesPublicIdRoute: ResourcesPublicIdRoute,
   SettingsAccountRoute: SettingsAccountRoute,
   BoardsIndexRoute: BoardsIndexRoute,
   KnowledgeIndexRoute: KnowledgeIndexRoute,
+  ResourcesIndexRoute: ResourcesIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
   TemplatesIndexRoute: TemplatesIndexRoute,
   TemplatesBoardIdIndexRoute: TemplatesBoardIdIndexRoute,

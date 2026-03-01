@@ -35,7 +35,7 @@ export default function SideNavigation({
   const [isInitialised, setIsInitialised] = useState(false);
 
   useEffect(() => {
-    const savedState = localStorage.getItem("kan_sidebar-collapsed");
+    const savedState = localStorage.getItem("sockets_sidebar-collapsed");
     if (savedState !== null) {
       setIsCollapsed(Boolean(JSON.parse(savedState)));
     }
@@ -45,7 +45,7 @@ export default function SideNavigation({
   useEffect(() => {
     if (isInitialised) {
       localStorage.setItem(
-        "kan_sidebar-collapsed",
+        "sockets_sidebar-collapsed",
         JSON.stringify(isCollapsed),
       );
     }
@@ -81,7 +81,7 @@ export default function SideNavigation({
           {!isCollapsed && (
             <Link to="/" className="block">
               <h1 className="pl-2 text-[16px] font-bold tracking-tight text-neutral-900 dark:text-dark-1000">
-                kan.bn
+                sockets
               </h1>
             </Link>
           )}
@@ -122,16 +122,16 @@ export default function SideNavigation({
           ))}
           <li>
             <Link
-              to="/knowledge"
+              to="/resources"
               onClick={() => onCloseSideNav?.()}
               className={twMerge(
                 "group flex h-[34px] items-center rounded-md p-1.5 text-sm font-normal leading-6 hover:bg-light-200 hover:text-light-1000 dark:hover:bg-dark-200 dark:hover:text-dark-1000",
                 isCollapsed ? "md:justify-center" : "justify-between",
-                pathname.includes("/knowledge")
+                pathname.includes("/resources")
                   ? "bg-light-200 text-light-1000 dark:bg-dark-200 dark:text-dark-1000"
                   : "text-neutral-600 dark:bg-dark-100 dark:text-dark-900",
               )}
-              title={isCollapsed ? "Knowledge" : undefined}
+              title={isCollapsed ? "Resources" : undefined}
             >
               <div
                 className={twMerge(
@@ -143,7 +143,7 @@ export default function SideNavigation({
               >
                 <TbBook size={18} className="shrink-0" />
                 <span className={twMerge(isCollapsed && "md:hidden")}>
-                  Knowledge
+                  Resources
                 </span>
               </div>
             </Link>

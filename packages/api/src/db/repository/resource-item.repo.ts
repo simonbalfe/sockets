@@ -1,8 +1,8 @@
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { generateUID } from "../../lib/utils";
 import type { dbClient } from "../client";
-import type { KnowledgeItemType } from "../schema";
-import { knowledgeItems, knowledgeItemsToLabels } from "../schema";
+import type { ResourceItemType } from "../schema";
+import { resourceItems, resourceItemsToLabels } from "../schema";
 
 const itemColumns = {
   publicId: true,
@@ -19,7 +19,7 @@ const itemColumns = {
 const withLabels = {
   labels: {
     with: {
-      knowledgeLabel: {
+      resourceLabel: {
         columns: { publicId: true, name: true, colourCode: true },
       },
     },
@@ -27,60 +27,60 @@ const withLabels = {
 } as const;
 
 export const getAllByUserId = async (db: dbClient, userId: string) =>
-  db.query.knowledgeItems.findMany({
+  db.query.resourceItems.findMany({
     columns: itemColumns,
     with: withLabels,
     where: and(
-      eq(knowledgeItems.createdBy, userId),
-      isNull(knowledgeItems.deletedAt),
+      eq(resourceItems.createdBy, userId),
+      isNull(resourceItems.deletedAt),
     ),
-    orderBy: [desc(knowledgeItems.createdAt)],
+    orderBy: [desc(resourceItems.createdAt)],
   });
 
 export const getFiltered = async (
   db: dbClient,
   userId: string,
-  filters: { types?: KnowledgeItemType[]; labelPublicIds?: string[] },
+  filters: { types?: ResourceItemType[]; labelPublicIds?: string[] },
 ) => {
   const conditions = [
-    eq(knowledgeItems.createdBy, userId),
-    isNull(knowledgeItems.deletedAt),
+    eq(resourceItems.createdBy, userId),
+    isNull(resourceItems.deletedAt),
   ];
   if (filters.types?.length) {
-    conditions.push(inArray(knowledgeItems.type, filters.types));
+    conditions.push(inArray(resourceItems.type, filters.types));
   }
 
-  const items = await db.query.knowledgeItems.findMany({
+  const items = await db.query.resourceItems.findMany({
     columns: itemColumns,
     with: withLabels,
     where: and(...conditions),
-    orderBy: [desc(knowledgeItems.createdAt)],
+    orderBy: [desc(resourceItems.createdAt)],
   });
 
   if (!filters.labelPublicIds?.length) return items;
 
   const labelSet = new Set(filters.labelPublicIds);
   return items.filter((item) =>
-    item.labels.some((l) => labelSet.has(l.knowledgeLabel.publicId)),
+    item.labels.some((l) => labelSet.has(l.resourceLabel.publicId)),
   );
 };
 
 export const getByPublicId = async (db: dbClient, publicId: string) =>
-  db.query.knowledgeItems.findFirst({
+  db.query.resourceItems.findFirst({
     columns: itemColumns,
     with: withLabels,
     where: and(
-      eq(knowledgeItems.publicId, publicId),
-      isNull(knowledgeItems.deletedAt),
+      eq(resourceItems.publicId, publicId),
+      isNull(resourceItems.deletedAt),
     ),
   });
 
 export const getIdByPublicId = async (db: dbClient, publicId: string) => {
-  const result = await db.query.knowledgeItems.findFirst({
+  const result = await db.query.resourceItems.findFirst({
     columns: { id: true },
     where: and(
-      eq(knowledgeItems.publicId, publicId),
-      isNull(knowledgeItems.deletedAt),
+      eq(resourceItems.publicId, publicId),
+      isNull(resourceItems.deletedAt),
     ),
   });
   return result ?? null;
@@ -90,7 +90,7 @@ export const create = async (
   db: dbClient,
   input: {
     title: string;
-    type: KnowledgeItemType;
+    type: ResourceItemType;
     url?: string | null;
     description?: string | null;
     fileKey?: string | null;
@@ -100,7 +100,7 @@ export const create = async (
   },
 ) => {
   const [result] = await db
-    .insert(knowledgeItems)
+    .insert(resourceItems)
     .values({
       publicId: generateUID(),
       title: input.title,
@@ -113,14 +113,14 @@ export const create = async (
       createdBy: input.createdBy,
     })
     .returning({
-      publicId: knowledgeItems.publicId,
-      title: knowledgeItems.title,
-      type: knowledgeItems.type,
-      url: knowledgeItems.url,
-      description: knowledgeItems.description,
-      fileKey: knowledgeItems.fileKey,
-      fileSize: knowledgeItems.fileSize,
-      mimeType: knowledgeItems.mimeType,
+      publicId: resourceItems.publicId,
+      title: resourceItems.title,
+      type: resourceItems.type,
+      url: resourceItems.url,
+      description: resourceItems.description,
+      fileKey: resourceItems.fileKey,
+      fileSize: resourceItems.fileSize,
+      mimeType: resourceItems.mimeType,
     });
   return result;
 };
@@ -132,14 +132,14 @@ export const update = async (
     title?: string;
     description?: string | null;
     url?: string | null;
-    type?: KnowledgeItemType;
+    type?: ResourceItemType;
     fileKey?: string | null;
     fileSize?: number | null;
     mimeType?: string | null;
   },
 ) => {
   const [result] = await db
-    .update(knowledgeItems)
+    .update(resourceItems)
     .set({
       title: input.title,
       description: input.description,
@@ -152,19 +152,19 @@ export const update = async (
     })
     .where(
       and(
-        eq(knowledgeItems.publicId, input.publicId),
-        isNull(knowledgeItems.deletedAt),
+        eq(resourceItems.publicId, input.publicId),
+        isNull(resourceItems.deletedAt),
       ),
     )
     .returning({
-      publicId: knowledgeItems.publicId,
-      title: knowledgeItems.title,
-      type: knowledgeItems.type,
-      url: knowledgeItems.url,
-      description: knowledgeItems.description,
-      fileKey: knowledgeItems.fileKey,
-      fileSize: knowledgeItems.fileSize,
-      mimeType: knowledgeItems.mimeType,
+      publicId: resourceItems.publicId,
+      title: resourceItems.title,
+      type: resourceItems.type,
+      url: resourceItems.url,
+      description: resourceItems.description,
+      fileKey: resourceItems.fileKey,
+      fileSize: resourceItems.fileSize,
+      mimeType: resourceItems.mimeType,
     });
   return result;
 };
@@ -174,15 +174,15 @@ export const softDelete = async (
   args: { publicId: string; deletedBy: string },
 ) => {
   const [result] = await db
-    .update(knowledgeItems)
+    .update(resourceItems)
     .set({ deletedAt: new Date(), deletedBy: args.deletedBy })
     .where(
       and(
-        eq(knowledgeItems.publicId, args.publicId),
-        isNull(knowledgeItems.deletedAt),
+        eq(resourceItems.publicId, args.publicId),
+        isNull(resourceItems.deletedAt),
       ),
     )
-    .returning({ publicId: knowledgeItems.publicId });
+    .returning({ publicId: resourceItems.publicId });
   return result;
 };
 
@@ -190,26 +190,26 @@ export const toggleLabel = async (
   db: dbClient,
   args: { knowledgeItemId: number; knowledgeLabelId: number },
 ) => {
-  const existing = await db.query.knowledgeItemsToLabels.findFirst({
+  const existing = await db.query.resourceItemsToLabels.findFirst({
     where: and(
-      eq(knowledgeItemsToLabels.knowledgeItemId, args.knowledgeItemId),
-      eq(knowledgeItemsToLabels.knowledgeLabelId, args.knowledgeLabelId),
+      eq(resourceItemsToLabels.knowledgeItemId, args.knowledgeItemId),
+      eq(resourceItemsToLabels.knowledgeLabelId, args.knowledgeLabelId),
     ),
   });
 
   if (existing) {
     await db
-      .delete(knowledgeItemsToLabels)
+      .delete(resourceItemsToLabels)
       .where(
         and(
-          eq(knowledgeItemsToLabels.knowledgeItemId, args.knowledgeItemId),
-          eq(knowledgeItemsToLabels.knowledgeLabelId, args.knowledgeLabelId),
+          eq(resourceItemsToLabels.knowledgeItemId, args.knowledgeItemId),
+          eq(resourceItemsToLabels.knowledgeLabelId, args.knowledgeLabelId),
         ),
       );
     return { added: false };
   }
 
-  await db.insert(knowledgeItemsToLabels).values({
+  await db.insert(resourceItemsToLabels).values({
     knowledgeItemId: args.knowledgeItemId,
     knowledgeLabelId: args.knowledgeLabelId,
   });

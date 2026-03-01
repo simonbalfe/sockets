@@ -53,7 +53,7 @@ export const userApiKeyRouter = new Hono<Env>()
 			const db = c.var.db;
 			const userId = c.get("userId");
 
-			const key = `kan_${crypto.randomUUID().replace(/-/g, "")}`;
+			const key = `sockets_${crypto.randomUUID().replace(/-/g, "")}`;
 
 			const [result] = await db
 				.insert(userApiKeys)
