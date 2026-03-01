@@ -1,6 +1,6 @@
 # Kan
 
-Open-source, self-hosted Kanban board. Create boards, organize work into lists, and track tasks with cards.
+Open-source, self-hosted productivity suite — a Kanban board for task management and a Knowledge base for saving resources. Two tools, one app.
 
 ## Tech Stack
 
@@ -8,25 +8,38 @@ Open-source, self-hosted Kanban board. Create boards, organize work into lists, 
 
 | Layer | Technology |
 |---|---|
-| Frontend | TanStack Start, React 18, Vite |
-| Backend | Hono on Bun |
+| Frontend | TanStack Start, React 19, Vite |
+| Backend | Hono (Node.js / Cloudflare Workers) |
 | Database | PostgreSQL 15 (PGLite for zero-config dev) |
 | ORM | Drizzle |
 | Auth | better-auth |
 | Styling | Tailwind CSS |
 | Deployment | Docker Compose, Cloudflare Workers |
 
-## Features
+## Kanban
 
-- Boards with public/private visibility and templates
+Task management with boards, lists, and cards.
+
+- Boards with public/private visibility
+- Board templates — create once, clone into new boards
 - Drag-and-drop lists and cards
-- Rich text editor (Tiptap) with markdown
+- Rich text card descriptions (Tiptap) with markdown
 - Color-coded labels, checklists, due dates
 - Smart filtering by members, labels, lists, dates
-- Resource items for saving links, videos, and references
-- REST API with auto-generated OpenAPI spec and Scalar docs
+
+## Knowledge
+
+Personal knowledge base for saving and organizing resources.
+
+- Save links, social posts (Twitter, Instagram, TikTok, YouTube, LinkedIn), and creator profiles
+- Upload files — images, videos, PDFs, audio (S3/R2 storage)
+- Color-coded labels for categorization
+- Filter and search by type and label
+
+## Shared
+
+- REST API with auto-generated OpenAPI spec and Scalar docs (`/api/docs`)
 - API keys for programmatic access
-- S3-compatible file uploads (avatars, attachments)
 - Dark mode with system-aware switching
 - Redis rate limiting (optional, falls back to in-memory)
 
