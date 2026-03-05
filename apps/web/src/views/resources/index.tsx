@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { HiOutlinePlusSmall } from "react-icons/hi2";
-import { TbArrowUpRight, TbBrandInstagram, TbBrandLinkedin, TbBrandTiktok, TbBrandX, TbBrandYoutube, TbDownload, TbExternalLink, TbFile, TbMusic, TbPhoto, TbUser, TbVideo } from "react-icons/tb";
+import { TbApps, TbArrowUpRight, TbBrandInstagram, TbBrandLinkedin, TbBrandTiktok, TbBrandX, TbBrandYoutube, TbDownload, TbExternalLink, TbFile, TbMusic, TbPhoto, TbUser, TbVideo } from "react-icons/tb";
 
 import Badge from "~/components/Badge";
 import Button from "~/components/Button";
@@ -27,6 +27,7 @@ const typeIcons: Record<string, React.ReactNode> = {
   video: <TbVideo className="h-4 w-4" />,
   pdf: <TbFile className="h-4 w-4" />,
   audio: <TbMusic className="h-4 w-4" />,
+  app: <TbApps className="h-4 w-4" />,
   other: <TbFile className="h-4 w-4" />,
 };
 
@@ -42,6 +43,7 @@ const typeLabels: Record<string, string> = {
   video: "Video",
   pdf: "PDF",
   audio: "Audio",
+  app: "App",
   other: "Other",
 };
 

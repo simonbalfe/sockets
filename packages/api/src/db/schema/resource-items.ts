@@ -26,6 +26,7 @@ export const resourceItemTypes = [
   "video",
   "pdf",
   "audio",
+  "app",
   "other",
 ] as const;
 export type ResourceItemType = (typeof resourceItemTypes)[number];

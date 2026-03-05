@@ -25,6 +25,7 @@ const resourceItemTypes = [
   "video",
   "pdf",
   "audio",
+  "app",
   "other",
 ] as const;
 

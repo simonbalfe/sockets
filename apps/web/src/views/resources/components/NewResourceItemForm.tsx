@@ -12,6 +12,7 @@ import LabelIcon from "~/components/LabelIcon";
 import { useModal } from "~/providers/modal";
 import { usePopup } from "~/providers/popup";
 import { api, apiKeys } from "~/utils/api";
+import { detectTypeFromUrl, detectTypeFromMime } from "~/utils/detect-resource-type";
 
 const resourceItemTypes = [
   "link",
@@ -25,17 +26,11 @@ const resourceItemTypes = [
   "video",
   "pdf",
   "audio",
+  "app",
   "other",
 ] as const;
 
 const FILE_TYPES = new Set(["image", "video", "pdf", "audio"]);
-
-const ACCEPT_BY_TYPE: Record<string, string> = {
-  image: "image/*",
-  video: "video/*",
-  audio: "audio/*",
-  pdf: "application/pdf",
-};
 
 const schema = z.object({
   title: z
@@ -78,6 +73,7 @@ export function NewResourceItemForm() {
   const selectedType = watch("type");
   const isFileType = FILE_TYPES.has(selectedType);
   const selectedLabelPublicIds = watch("labelPublicIds", []);
+  const [mode, setMode] = useState<"url" | "file">("url");
 
   const { data: allLabels } = useQuery({
     queryKey: apiKeys.resourceLabel.all(),
@@ -213,26 +209,45 @@ export function NewResourceItemForm() {
               }
             }}
           />
-          <select
-            {...register("type")}
-            className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-light-600 focus:ring-2 focus:ring-inset focus:ring-light-700 dark:bg-dark-300 dark:text-dark-1000 dark:ring-dark-700 dark:focus:ring-dark-700 sm:leading-6"
-          >
-            {resourceItemTypes.map((t) => (
-              <option key={t} value={t}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </option>
-            ))}
-          </select>
-          {isFileType ? (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("url");
+                setSelectedFile(null);
+                setValue("type", "link");
+              }}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${mode === "url" ? "bg-neutral-900 text-white dark:bg-dark-800 dark:text-dark-1000" : "text-light-800 ring-1 ring-inset ring-light-600 hover:bg-light-200 dark:text-dark-900 dark:ring-dark-700 dark:hover:bg-dark-300"}`}
+            >
+              URL
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("file");
+                setValue("url", "");
+                setValue("type", "other");
+              }}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${mode === "file" ? "bg-neutral-900 text-white dark:bg-dark-800 dark:text-dark-1000" : "text-light-800 ring-1 ring-inset ring-light-600 hover:bg-light-200 dark:text-dark-900 dark:ring-dark-700 dark:hover:bg-dark-300"}`}
+            >
+              File
+            </button>
+            <span className="ml-auto flex items-center rounded-full bg-light-300 px-2.5 py-0.5 text-xs font-medium text-light-900 dark:bg-dark-400 dark:text-dark-900">
+              {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}
+            </span>
+          </div>
+          {mode === "file" ? (
             <div>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept={ACCEPT_BY_TYPE[selectedType] ?? "*/*"}
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null;
                   setSelectedFile(file);
+                  if (file) {
+                    setValue("type", detectTypeFromMime(file.type) as FormValues["type"]);
+                  }
                 }}
               />
               <button
@@ -249,8 +264,17 @@ export function NewResourceItemForm() {
           ) : (
             <Input
               id="url"
-              placeholder={selectedType === "creator" ? "Profile URL (optional)" : "URL (optional)"}
-              {...register("url")}
+              placeholder="Paste a URL"
+              {...register("url", {
+                onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                  const val = e.target.value.trim();
+                  if (val) {
+                    setValue("type", detectTypeFromUrl(val) as FormValues["type"]);
+                  } else {
+                    setValue("type", "link");
+                  }
+                },
+              })}
             />
           )}
           <Input
