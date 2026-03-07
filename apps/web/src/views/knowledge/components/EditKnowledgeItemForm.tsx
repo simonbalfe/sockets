@@ -81,7 +81,7 @@ export function EditKnowledgeItemForm({
     values: item
       ? {
           title: item.title,
-          type: item.type,
+          type: item.type as FormValues["type"],
           url: item.url ?? "",
           description: item.description ?? "",
         }
@@ -92,7 +92,7 @@ export function EditKnowledgeItemForm({
   const isFileType = FILE_TYPES.has(selectedType);
 
   const itemLabelPublicIds =
-    item?.labels.map((l) => l.knowledgeLabel.publicId) ?? [];
+    item?.labels.map((l) => l.resourceLabel.publicId) ?? [];
 
   const updateItem = useMutation({
     mutationFn: api.knowledgeItem.update,

@@ -89,7 +89,7 @@ interface ApiResourceItem {
   publicId: string;
   title: string;
   description: string | null;
-  type: "link" | "creator" | "tweet" | "instagram" | "tiktok" | "youtube" | "linkedin" | "image" | "video" | "pdf" | "audio" | "other";
+  type: "link" | "creator" | "tweet" | "instagram" | "tiktok" | "youtube" | "linkedin" | "image" | "video" | "pdf" | "audio" | "app" | "other";
   url: string | null;
   fileKey: string | null;
   fileSize: number | null;
@@ -154,6 +154,16 @@ export const apiKeys = {
       ["resourceItem", "byId", input] as const,
   },
   resourceLabel: {
+    all: () => ["resourceLabel", "all"] as const,
+  },
+  knowledgeItem: {
+    all: () => ["resourceItem", "all"] as const,
+    search: (input: { types?: string[]; labels?: string[] }) =>
+      ["resourceItem", "search", input] as const,
+    byId: (input: { publicId: string }) =>
+      ["resourceItem", "byId", input] as const,
+  },
+  knowledgeLabel: {
     all: () => ["resourceLabel", "all"] as const,
   },
   user: {
@@ -485,6 +495,83 @@ export const api = {
       put<{ added: boolean }>(
         `/resources/${input.publicId}/labels/${input.labelPublicId}`,
         {},
+      ),
+  },
+
+  knowledgeItem: {
+    all: () => get<ApiResourceItem[]>("/resources"),
+
+    search: (input: { types?: string[]; labels?: string[] }) => {
+      const params = new URLSearchParams();
+      if (input.types?.length) params.set("type", input.types.join(","));
+      if (input.labels?.length) params.set("label", input.labels.join(","));
+      return get<ApiResourceItem[]>(
+        `/resources/search?${params.toString()}`,
+      );
+    },
+
+    byId: (input: { publicId: string }) =>
+      get<ApiResourceItem>(`/resources/${input.publicId}`),
+
+    create: (input: {
+      title: string;
+      type: ApiResourceItem["type"];
+      url?: string | null;
+      description?: string | null;
+      fileKey?: string | null;
+      fileSize?: number | null;
+      mimeType?: string | null;
+    }) => post<ApiResourceItem>("/resources", input),
+
+    update: (input: {
+      publicId: string;
+      title?: string;
+      type?: ApiResourceItem["type"];
+      url?: string | null;
+      description?: string | null;
+      fileKey?: string | null;
+      fileSize?: number | null;
+      mimeType?: string | null;
+    }) =>
+      put<ApiResourceItem>(`/resources/${input.publicId}`, {
+        title: input.title,
+        type: input.type,
+        url: input.url,
+        description: input.description,
+        fileKey: input.fileKey,
+        fileSize: input.fileSize,
+        mimeType: input.mimeType,
+      }),
+
+    delete: (input: { publicId: string }) =>
+      del<{ success: boolean }>(`/resources/${input.publicId}`),
+
+    toggleLabel: (input: { publicId: string; labelPublicId: string }) =>
+      put<{ added: boolean }>(
+        `/resources/${input.publicId}/labels/${input.labelPublicId}`,
+        {},
+      ),
+  },
+
+  knowledgeLabel: {
+    all: () => get<ApiResourceLabel[]>("/resources/labels/all"),
+
+    create: (input: { name: string; colourCode: string }) =>
+      post<ApiResourceLabel>("/resources/labels", input),
+
+    update: (input: {
+      labelPublicId: string;
+      name: string;
+      colourCode: string;
+    }) =>
+      put<ApiResourceLabel>(
+        `/resources/labels/${input.labelPublicId}`,
+        { name: input.name, colourCode: input.colourCode },
+      ),
+
+    delete: (input: { labelPublicId: string }) =>
+      del<{ success: boolean }>(
+        `/resources/labels/${input.labelPublicId}`,
       ),
   },
 

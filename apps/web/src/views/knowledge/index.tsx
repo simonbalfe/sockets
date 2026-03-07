@@ -79,7 +79,7 @@ export default function KnowledgeView() {
   };
 
   const filteredItems = items?.filter((item) => {
-    const matchesLabel = selectedLabelIds.size === 0 || item.labels.some((l) => selectedLabelIds.has(l.knowledgeLabel.publicId));
+    const matchesLabel = selectedLabelIds.size === 0 || item.labels.some((l) => selectedLabelIds.has(l.resourceLabel.publicId));
     const matchesType = selectedTypes.size === 0 || selectedTypes.has(item.type);
     return matchesLabel && matchesType;
   });
@@ -241,11 +241,11 @@ export default function KnowledgeView() {
                   <div className="mt-3 flex flex-wrap gap-1 overflow-hidden">
                     {item.labels.map((l) => (
                       <Badge
-                        key={l.knowledgeLabel.publicId}
-                        value={l.knowledgeLabel.name}
+                        key={l.resourceLabel.publicId}
+                        value={l.resourceLabel.name}
                         iconLeft={
                           <LabelIcon
-                            colourCode={l.knowledgeLabel.colourCode}
+                            colourCode={l.resourceLabel.colourCode}
                           />
                         }
                       />

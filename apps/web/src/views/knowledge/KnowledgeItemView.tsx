@@ -149,9 +149,9 @@ export default function KnowledgeItemView() {
             <div className="mt-4 flex flex-wrap gap-1.5">
               {item.labels.map((l) => (
                 <Badge
-                  key={l.knowledgeLabel.publicId}
-                  value={l.knowledgeLabel.name}
-                  iconLeft={<LabelIcon colourCode={l.knowledgeLabel.colourCode} />}
+                  key={l.resourceLabel.publicId}
+                  value={l.resourceLabel.name}
+                  iconLeft={<LabelIcon colourCode={l.resourceLabel.colourCode} />}
                 />
               ))}
             </div>
