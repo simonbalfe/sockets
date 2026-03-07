@@ -31,7 +31,14 @@ export const app = new Hono<Env>()
 	.use(async (c, next) => {
 		const db = createDb();
 		c.set("db", db);
-		c.set("userId", "28daa3f5-8e58-4cf4-973b-494cec5aabc1");
+
+		const session = await auth.api.getSession({
+			headers: c.req.raw.headers,
+		});
+		if (!session?.user?.id) {
+			return c.json({ error: "Unauthorized" }, 401);
+		}
+		c.set("userId", session.user.id);
 		await next();
 	})
 	.onError((err, c) => {
