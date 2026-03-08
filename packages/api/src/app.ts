@@ -4,8 +4,10 @@ import { openAPIRouteHandler } from "hono-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
 import { auth } from "./auth";
 
+import { eq } from "drizzle-orm";
 import type { dbClient } from "./db/client";
 import { createDb } from "./db/client";
+import { userApiKeys } from "./db/schema/user-api-keys";
 import { boardRouter } from "./routes/boards";
 import { cardRouter } from "./routes/cards";
 import { checklistRouter } from "./routes/checklists";
@@ -32,14 +34,31 @@ export const app = new Hono<Env>()
 		const db = createDb();
 		c.set("db", db);
 
+		// Try session auth first
 		const session = await auth.api.getSession({
 			headers: c.req.raw.headers,
 		});
-		if (!session?.user?.id) {
-			return c.json({ error: "Unauthorized" }, 401);
+		if (session?.user?.id) {
+			c.set("userId", session.user.id);
+			return next();
 		}
-		c.set("userId", session.user.id);
-		await next();
+
+		// Fall back to API key auth
+		const authHeader = c.req.header("Authorization");
+		if (authHeader?.startsWith("Bearer sockets_")) {
+			const apiKey = authHeader.slice(7);
+			const result = await db
+				.select({ userId: userApiKeys.userId })
+				.from(userApiKeys)
+				.where(eq(userApiKeys.key, apiKey))
+				.limit(1);
+			if (result.length > 0) {
+				c.set("userId", result[0]!.userId);
+				return next();
+			}
+		}
+
+		return c.json({ error: "Unauthorized" }, 401);
 	})
 	.onError((err, c) => {
 		console.error(`[API] ${c.req.method} ${c.req.path} ERROR:`, err);

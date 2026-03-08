@@ -427,4 +427,32 @@ export const boardRouter = new Hono<Env>()
 			const available = await boardRepo.isBoardSlugAvailable(db, boardSlug);
 			return c.json({ isReserved: !available });
 		},
+	)
+
+	.get(
+		"/:boardPublicId/archived",
+		describeRoute({
+			tags: ["Boards"],
+			summary: "Get archived cards",
+			description: "Get all archived cards for a board",
+			responses: {
+				200: { description: "Archived cards" },
+				404: { description: "Board not found" },
+			},
+		}),
+		async (c) => {
+			const db = c.var.db;
+			const boardPublicId = c.req.param("boardPublicId");
+
+			const board = await boardRepo.getBoardIdByPublicId(db, boardPublicId);
+			if (!board) {
+				return c.json({ error: "Board not found" }, 404);
+			}
+
+			const archivedCards = await cardRepo.getArchivedByBoardId(
+				db,
+				boardPublicId,
+			);
+			return c.json(archivedCards);
+		},
 	);

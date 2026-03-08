@@ -35,6 +35,7 @@ export const cards = pgTable("card", {
     .notNull()
     .references(() => lists.id, { onDelete: "cascade" }),
   dueDate: timestamp("dueDate"),
+  archivedAt: timestamp("archivedAt"),
 }).enableRLS();
 
 export const cardsRelations = relations(cards, ({ one, many }) => ({

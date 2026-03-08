@@ -1,17 +1,25 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "sockets-web",
-  "compatibility_date": "2025-09-02",
-  "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
-  "vars": {
-    "VITE_PUBLIC_URL": "https://kan.simonbalfe.com",
-    "BETTER_AUTH_URL": "https://kan.simonbalfe.com"
-  },
-  "routes": [
-    {
-      "pattern": "kan.simonbalfe.com",
-      "custom_domain": true
-    }
-  ]
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "sockets-web",
+	"compatibility_date": "2025-09-02",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"main": "@tanstack/react-start/server-entry",
+	"vars": {
+		"VITE_PUBLIC_URL": "https://kan.simonbalfe.com",
+		"BETTER_AUTH_URL": "https://kan.simonbalfe.com"
+	},
+	"routes": [
+		{
+			"pattern": "kan.simonbalfe.com",
+			"custom_domain": true
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "R2_BUCKET",
+			"bucket_name": "sockets-uploads"
+		}
+	]
 }

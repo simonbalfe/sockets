@@ -12,12 +12,11 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1000.0",
-    "@aws-sdk/s3-request-presigner": "^3.1000.0",
     "@hono/standard-validator": "^0.2.2",
     "@hono/zod-validator": "^0.4.3",
     "@neondatabase/serverless": "^1.0.0",
     "@scalar/hono-api-reference": "^0.9.44",
+    "aws4fetch": "^1.0.20",
     "better-auth": "^1.2.7",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.42.0",

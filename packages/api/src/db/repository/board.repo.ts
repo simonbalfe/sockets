@@ -213,6 +213,7 @@ export const getByPublicId = async (
             where: and(
               cardIds.length > 0 ? inArray(cards.publicId, cardIds) : undefined,
               isNull(cards.deletedAt),
+              isNull(cards.archivedAt),
               buildDueDateWhere(filters.dueDate),
             ),
             orderBy: [asc(cards.index)],
@@ -360,6 +361,7 @@ export const getBySlug = async (
             where: and(
               cardIds.length > 0 ? inArray(cards.publicId, cardIds) : undefined,
               isNull(cards.deletedAt),
+              isNull(cards.archivedAt),
               buildDueDateWhere(filters.dueDate),
             ),
             orderBy: [asc(cards.index)],

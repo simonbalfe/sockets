@@ -1,50 +1,41 @@
-import {
-	DeleteObjectCommand,
-	GetObjectCommand,
-	PutObjectCommand,
-	S3Client,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { AwsClient } from "aws4fetch";
 
-const s3 = new S3Client({
-	region: "auto",
-	endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-	credentials: {
-		accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-		secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-	},
+const r2 = new AwsClient({
+	accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+	secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
 });
 
 const bucket = process.env.R2_BUCKET_NAME!;
+const endpoint = `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
 
 export async function generateUploadUrl(fileKey: string, mimeType: string) {
-	return getSignedUrl(
-		s3,
-		new PutObjectCommand({
-			Bucket: bucket,
-			Key: fileKey,
-			ContentType: mimeType,
+	const url = new URL(`/${bucket}/${fileKey}`, endpoint);
+	url.searchParams.set("X-Amz-Expires", "900");
+
+	const signed = await r2.sign(
+		new Request(url, {
+			method: "PUT",
+			headers: { "Content-Type": mimeType },
 		}),
-		{ expiresIn: 900 },
+		{ aws: { signQuery: true } },
 	);
+
+	return signed.url;
 }
 
 export async function generateDownloadUrl(fileKey: string) {
-	return getSignedUrl(
-		s3,
-		new GetObjectCommand({
-			Bucket: bucket,
-			Key: fileKey,
-		}),
-		{ expiresIn: 3600 },
-	);
+	const url = new URL(`/${bucket}/${fileKey}`, endpoint);
+	url.searchParams.set("X-Amz-Expires", "3600");
+
+	const signed = await r2.sign(new Request(url), {
+		aws: { signQuery: true },
+	});
+
+	return signed.url;
 }
 
 export async function deleteObject(fileKey: string) {
-	await s3.send(
-		new DeleteObjectCommand({
-			Bucket: bucket,
-			Key: fileKey,
-		}),
-	);
+	const url = new URL(`/${bucket}/${fileKey}`, endpoint);
+
+	await r2.fetch(url.toString(), { method: "DELETE" });
 }

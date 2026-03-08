@@ -230,6 +230,59 @@ export const cardRouter = new Hono<Env>()
 	)
 
 	.put(
+		"/:cardPublicId/archive",
+		describeRoute({
+			tags: ["Cards"],
+			summary: "Archive card",
+			description: "Archive a card so it is hidden from the board",
+			responses: {
+				200: { description: "Card archived" },
+				404: { description: "Card not found" },
+			},
+		}),
+		async (c) => {
+			const db = c.var.db;
+			const cardPublicId = c.req.param("cardPublicId");
+
+			const card = await cardRepo.getByPublicId(db, cardPublicId);
+			if (!card) {
+				return c.json({ error: "Card not found" }, 404);
+			}
+
+			await cardRepo.archive(db, { cardId: card.id });
+			return c.json({ success: true });
+		},
+	)
+
+	.put(
+		"/:cardPublicId/unarchive",
+		describeRoute({
+			tags: ["Cards"],
+			summary: "Unarchive card",
+			description: "Restore an archived card back to its list",
+			responses: {
+				200: { description: "Card unarchived" },
+				404: { description: "Card not found" },
+			},
+		}),
+		async (c) => {
+			const db = c.var.db;
+			const cardPublicId = c.req.param("cardPublicId");
+
+			const card = await cardRepo.getByPublicId(db, cardPublicId);
+			if (!card) {
+				return c.json({ error: "Card not found" }, 404);
+			}
+
+			const result = await cardRepo.unarchive(db, {
+				cardId: card.id,
+				listId: card.listId,
+			});
+			return c.json(result);
+		},
+	)
+
+	.put(
 		"/:cardPublicId/labels/:labelPublicId",
 		describeRoute({
 			tags: ["Cards"],
